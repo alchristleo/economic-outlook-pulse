@@ -1,101 +1,141 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { Loader2, Newspaper } from 'lucide-react'
+import CountrySelector from './components/CountrySelector'
+import BriefingCard from './components/BriefingCard'
+import ChatInterface from './components/ChatInterface'
+import { Button } from '@/components/ui/button'
+import { COUNTRIES } from '@/lib/worldbank'
+import type { Briefing, Country, WorldBankIndicator } from '@/types'
+
+type AppState = 'idle' | 'loading' | 'ready'
+
+export default function HomePage() {
+  const [appState, setAppState] = useState<AppState>('idle')
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
+  const [briefing, setBriefing] = useState<Briefing | null>(null)
+  const [indicators, setIndicators] = useState<WorldBankIndicator[]>([])
+
+  async function handleGenerate() {
+    if (!selectedCountry) return
+    setAppState('loading')
+    setBriefing(null)
+
+    try {
+      const res = await fetch('/api/generate-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          countryCode: selectedCountry.code,
+          countryName: selectedCountry.name,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to generate briefing')
+
+      const data = (await res.json()) as { briefing: Briefing; indicators: WorldBankIndicator[] }
+      setBriefing(data.briefing)
+      setIndicators(data.indicators)
+      setAppState('ready')
+    } catch {
+      toast.error('Failed to generate briefing. Please try again.')
+      setAppState('idle')
+    }
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="border-b-2 border-[#E3120B] bg-[#1A1A1A] text-white">
+        <div className="mx-auto max-w-6xl px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-[#E3120B]">
+                <Newspaper className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-base font-bold tracking-tight">The Pulse</h1>
+                <p className="text-xs text-gray-400">AI-Powered Economic Briefing</p>
+              </div>
+            </div>
+            <span className="rounded border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-300">
+              Prototype — not official Economist content
+            </span>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </header>
+
+      {/* Controls */}
+      <div className="border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-6xl px-4 py-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div>
+              <p className="text-sm font-medium text-[#1A1A1A]">Select a country</p>
+              <p className="text-xs text-gray-500">Grounded in latest World Bank public data</p>
+            </div>
+            <CountrySelector
+              countries={COUNTRIES}
+              onSelect={setSelectedCountry}
+              selectedCode={selectedCountry?.code}
+              isLoading={appState === 'loading'}
+            />
+            <Button
+              onClick={handleGenerate}
+              disabled={!selectedCountry || appState === 'loading'}
+              className="bg-[#E3120B] text-white hover:bg-[#E3120B]/90"
+            >
+              {appState === 'loading' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Briefing&hellip;
+                </>
+              ) : (
+                'Generate Brief'
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        {appState === 'idle' && (
+          <div className="rounded-lg border-2 border-dashed border-gray-200 py-24 text-center">
+            <Newspaper className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+            <p className="text-lg font-medium text-gray-400">
+              Select a country to generate your briefing
+            </p>
+            <p className="mt-1 text-sm text-gray-400">
+              Default focus: Indonesia / Southeast Asia
+            </p>
+          </div>
+        )}
+
+        {appState === 'loading' && (
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#E3120B]" />
+            <p className="text-gray-500">Fetching World Bank data and generating brief&hellip;</p>
+          </div>
+        )}
+
+        {appState === 'ready' && briefing && (
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <BriefingCard briefing={briefing} indicators={indicators} />
+            <ChatInterface briefing={briefing} worldBankData={indicators} />
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-16 border-t border-gray-200 py-6">
+        <div className="mx-auto max-w-6xl px-4 text-center text-xs text-gray-400">
+          Prototype built for The Economist interview — demonstrates AI Lab-style experimentation
+          with grounded analysis and conversational depth. Data: World Bank Open Data.
+          Not affiliated with The Economist Group.
+        </div>
       </footer>
-    </div>
-  );
+    </main>
+  )
 }
