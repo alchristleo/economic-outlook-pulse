@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic, MODEL } from '@/lib/anthropic'
-import { fetchIndicators, fetchExchangeRate, COUNTRIES } from '@/lib/worldbank'
+import { fetchIndicators } from '@/lib/imf'
+import { fetchExchangeRate, COUNTRIES } from '@/lib/worldbank'
 import { createBriefingSystemPrompt, createBriefingUserPrompt } from '@/lib/prompts'
 import { computeHealthScore } from '@/lib/scoring'
 import type { GenerateBriefRequest, Briefing } from '@/types'

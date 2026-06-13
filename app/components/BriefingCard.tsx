@@ -59,7 +59,7 @@ export default function BriefingCard({ briefing }: BriefingCardProps) {
             </Badge>
             {briefing.data_year && (
               <Badge variant="outline" className="text-xs text-gray-500">
-                World Bank data · {briefing.data_year}
+                IMF WEO · {briefing.data_year}
               </Badge>
             )}
             {briefing.exchange_rate && (

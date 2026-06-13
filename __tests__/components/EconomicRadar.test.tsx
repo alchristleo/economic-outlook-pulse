@@ -13,10 +13,10 @@ const mockScore: EconomicHealthScore = {
   sentiment: 'moderate',
   dimensions: [
     { name: 'Economic Momentum', score: 7, weight: 0.25 },
-    { name: 'Monetary Health', score: 8, weight: 0.20 },
+    { name: 'Price Stability', score: 8, weight: 0.20 },
     { name: 'Fiscal Position', score: 8, weight: 0.20 },
     { name: 'External Balance', score: 6, weight: 0.20 },
-    { name: 'Institutional Quality', score: 5, weight: 0.15 },
+    { name: 'Labor Market', score: 5, weight: 0.15 },
   ],
 }
 
@@ -34,6 +34,6 @@ describe('EconomicRadar', () => {
   it('renders all 5 dimension names', () => {
     render(<EconomicRadar healthScore={mockScore} />)
     expect(screen.getByText(/Economic Momentum/i)).toBeInTheDocument()
-    expect(screen.getByText(/Institutional Quality/i)).toBeInTheDocument()
+    expect(screen.getByText(/Labor Market/i)).toBeInTheDocument()
   })
 })

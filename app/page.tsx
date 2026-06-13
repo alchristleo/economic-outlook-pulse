@@ -72,7 +72,7 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center gap-3">
             <div>
               <p className="text-sm font-medium text-[#1A1A1A]">Select a country</p>
-              <p className="text-xs text-gray-500">Grounded in latest World Bank public data</p>
+              <p className="text-xs text-gray-500">Grounded in latest IMF World Economic Outlook data</p>
             </div>
             <CountrySelector
               countries={COUNTRIES}
@@ -115,7 +115,7 @@ export default function HomePage() {
         {appState === 'loading' && (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#E3120B]" />
-            <p className="text-gray-500">Fetching World Bank data and generating brief&hellip;</p>
+            <p className="text-gray-500">Fetching IMF data and generating brief&hellip;</p>
           </div>
         )}
 
@@ -131,7 +131,7 @@ export default function HomePage() {
       <footer className="mt-16 border-t border-gray-200 py-6">
         <div className="mx-auto max-w-6xl px-4 text-center text-xs text-gray-400">
           Prototype built for The Economist interview — demonstrates AI Lab-style experimentation
-          with grounded analysis and conversational depth. Data: World Bank Open Data.
+          with grounded analysis and conversational depth. Data: IMF World Economic Outlook.
           Not affiliated with The Economist Group.
         </div>
       </footer>

@@ -54,7 +54,7 @@ Composite score: ${healthScore.composite}/100 — ${healthScore.sentiment} (${he
 ## Dimension Scores (0–10)
 ${dimensionBlock}
 
-## Raw Indicators (World Bank data)
+## Raw Indicators (IMF World Economic Outlook)
 Use these exact figures. Do not invent numbers or substitute different data:
 
 ${dataBlock}
@@ -94,7 +94,7 @@ ${dimensionBlock}
 **${briefing.title}**
 ${briefing.executive_summary}
 
-**Indicators (World Bank):**
+**Indicators (IMF WEO):**
 ${indicatorBlock}
 
 **Risks:** ${briefing.risks.join('; ')}
