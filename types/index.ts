@@ -17,6 +17,7 @@ export type Sentiment = 'strong' | 'moderate' | 'weak' | 'vulnerable'
 export interface EconomicHealthScore {
   composite: number       // 0–100
   sentiment: Sentiment
+  // weights in dimensions must sum to 1.0
   dimensions: DimensionScore[]
 }
 

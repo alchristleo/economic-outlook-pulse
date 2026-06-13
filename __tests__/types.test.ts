@@ -1,4 +1,4 @@
-import type { Briefing, Message, WorldBankIndicator, ChatRequest, GenerateBriefRequest, Country, EconomicHealthScore } from '@/types'
+import type { Briefing, Message, WorldBankIndicator, ChatRequest, GenerateBriefRequest, Country, EconomicHealthScore, DimensionScore } from '@/types'
 
 const indicator: WorldBankIndicator = {
   code: 'NY.GDP.MKTP.KD.ZG',
@@ -48,11 +48,9 @@ test('types compile and hold expected values', () => {
   expect(country.code).toBe('ID')
 })
 
-import type { DimensionScore } from '@/types'
-
 test('DimensionScore holds name and score', () => {
-  const d: DimensionScore = { name: 'Economic Momentum', score: 72, weight: 0.25 }
-  expect(d.score).toBe(72)
+  const d: DimensionScore = { name: 'Economic Momentum', score: 7, weight: 0.25 }
+  expect(d.score).toBe(7)
 })
 
 test('EconomicHealthScore holds composite and dimensions', () => {
