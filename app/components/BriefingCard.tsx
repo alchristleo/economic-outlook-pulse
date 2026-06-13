@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import IndicatorChart from './IndicatorChart'
+import EconomicRadar from './EconomicRadar'
 import type { Briefing, WorldBankIndicator } from '@/types'
 import { format } from 'date-fns'
 import { AlertTriangle, TrendingUp, Eye } from 'lucide-react'
@@ -63,13 +63,19 @@ export default function BriefingCard({ briefing, indicators }: BriefingCardProps
                 World Bank data · {briefing.data_year}
               </Badge>
             )}
+            {briefing.exchange_rate && (
+              <Badge variant="outline" className="text-xs text-gray-500">
+                {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
+              </Badge>
+            )}
           </div>
         </div>
         <p className="text-base leading-relaxed text-gray-700">{briefing.executive_summary}</p>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <IndicatorChart indicators={indicators} />
+        {/* Primary: Economic Health Radar */}
+        <EconomicRadar healthScore={briefing.health_score} />
 
         <Separator />
 

@@ -14,6 +14,18 @@ const mockBriefing: Briefing = {
   country_code: 'ID',
   country_name: 'Indonesia',
   data_year: 2023,
+  health_score: {
+    composite: 68,
+    sentiment: 'moderate' as const,
+    dimensions: [
+      { name: 'Economic Momentum', score: 7, weight: 0.25 },
+      { name: 'Monetary Health', score: 8, weight: 0.20 },
+      { name: 'Fiscal Position', score: 8, weight: 0.20 },
+      { name: 'External Balance', score: 6, weight: 0.20 },
+      { name: 'Institutional Quality', score: 5, weight: 0.15 },
+    ],
+  },
+  exchange_rate: null,
 }
 
 describe('ChatInterface', () => {

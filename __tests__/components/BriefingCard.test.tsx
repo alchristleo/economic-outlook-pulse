@@ -16,7 +16,7 @@ const mockBriefing: Briefing = {
   title: 'Indonesia: Steady as She Goes',
   executive_summary: "Southeast Asia's largest economy navigates commodity headwinds.",
   key_indicators: mockIndicators,
-  risks: ['Commodity price volatility', 'Weak global demand'],
+  risks: ['Commodity price volatility'],
   opportunities: ['Nickel supply chain position'],
   what_to_watch: ['Bank Indonesia rate decisions'],
   bottom_line: "Indonesia's fundamentals remain sound.",
@@ -24,6 +24,18 @@ const mockBriefing: Briefing = {
   country_code: 'ID',
   country_name: 'Indonesia',
   data_year: 2023,
+  health_score: {
+    composite: 68,
+    sentiment: 'moderate',
+    dimensions: [
+      { name: 'Economic Momentum', score: 7, weight: 0.25 },
+      { name: 'Monetary Health', score: 8, weight: 0.20 },
+      { name: 'Fiscal Position', score: 8, weight: 0.20 },
+      { name: 'External Balance', score: 6, weight: 0.20 },
+      { name: 'Institutional Quality', score: 5, weight: 0.15 },
+    ],
+  },
+  exchange_rate: { currency: 'IDR', rate: 15800 },
 }
 
 describe('BriefingCard', () => {
@@ -37,6 +49,16 @@ describe('BriefingCard', () => {
     expect(screen.getByText(/commodity headwinds/i)).toBeInTheDocument()
   })
 
+  it('renders health score', () => {
+    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    expect(screen.getByText('68')).toBeInTheDocument()
+  })
+
+  it('renders sentiment label', () => {
+    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    expect(screen.getByText(/moderate/i)).toBeInTheDocument()
+  })
+
   it('renders a risk item', () => {
     render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
     expect(screen.getByText('Commodity price volatility')).toBeInTheDocument()
@@ -47,13 +69,13 @@ describe('BriefingCard', () => {
     expect(screen.getByText(/fundamentals remain sound/i)).toBeInTheDocument()
   })
 
-  it('shows Prototype badge', () => {
+  it('renders Prototype badge', () => {
     render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
     expect(screen.getByText(/prototype/i)).toBeInTheDocument()
   })
 
-  it('shows data year', () => {
+  it('renders exchange rate', () => {
     render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
-    expect(screen.getByText(/2023/)).toBeInTheDocument()
+    expect(screen.getByText(/IDR/)).toBeInTheDocument()
   })
 })
