@@ -26,7 +26,7 @@
 - **Framework**: Next.js 14 (App Router) + TypeScript (strict mode)
 - **Styling**: Tailwind CSS + shadcn/ui (use existing components heavily: Card, Button, Select, Dialog, Tabs, etc.)
 - **Charts**: Recharts (preferred) or Chart.js
-- **LLM**: Anthropic Claude (Sonnet 3.5 or Opus) via `@anthropic-ai/sdk` or Vercel AI SDK
+- **LLM**: Anthropic Claude (`claude-sonnet-4-6`) via `@anthropic-ai/sdk`
 - **Data**: World Bank Indicators API (public, no key) + REST Countries (optional)
 - **State**: React hooks + `useState`/`useEffect`. TanStack Query only if chat history grows complex.
 - **Deployment target**: Vercel (free tier is perfect)
@@ -124,6 +124,13 @@ Allow the model to reference specific numbers and sections from the briefing.
 5.5 Prompt Location
 All prompts live in lib/prompts.ts. Never hardcode long prompts inside route handlers.
 
+### 5.6 Security Rules (Non-Negotiable)
+- **Never trust client-supplied strings for prompt construction.** `countryCode` is the only input accepted from the client; `countryName` is always derived server-side by looking up `countryCode` in the `COUNTRIES` allowlist.
+- **Allowlist all country codes** in both API routes — reject anything not in `COUNTRIES` with HTTP 400.
+- **Cap and sanitize chat messages** — limit each message to 2000 chars, allowlist `role` to `user | assistant`, coerce content to `String`.
+- **Add injection-guard instructions to every system prompt** — explicitly instruct the model to ignore role-switching, system prompt extraction, or non-economic content requests.
+- These rules are a baseline, not a ceiling. Rate limiting and CORS are out of scope for the prototype but should be added before any real deployment.
+
 6. UI & Design System
 
 Visual Identity: Clean, modern, premium. Heavy use of white space. Economist red (#E3120B or #C8102E) as primary accent.
@@ -206,7 +213,40 @@ Generate generic AI-sounding UI copy
 Ignore the Economist voice guidelines
 
 12. Quick Start Commands (for the developer)
-Bashnpx create-next-app@latest the-pulse --yes --tailwind --eslint --yes
+```bash
+npx create-next-app@latest the-pulse --yes --tailwind --eslint --yes
 cd the-pulse
-npx shadcn@latest init
-# Then install: @anthropic-ai/sdk lucide-react date-fns recharts sonner
+npx shadcn@latest init --style default --base-color slate --css-variables yes
+npx shadcn@latest add card button select dialog tabs badge separator scroll-area
+npm install @anthropic-ai/sdk lucide-react date-fns recharts sonner
+```
+
+---
+
+## 13. Known Environment Pitfalls
+
+These caused subagent debug loops in practice — pre-empt them:
+
+### Tailwind v3/v4 conflict (shadcn init)
+Some `shadcn init` versions inject Tailwind v4-only directives into `globals.css`:
+```css
+@import "shadcn/tailwind.css";   /* remove — v4 only */
+@import "tw-animate-css";        /* remove — v4 only */
+```
+Also remove `@apply border-border outline-ring/50` from the `*` rule — replace with raw CSS vars.
+Extend `tailwind.config.ts` with all shadcn color tokens under `theme.extend.colors` so `bg-card`, `text-muted-foreground` etc. resolve under Tailwind v3.
+
+### jest.config.ts typo
+Correct key is `setupFilesAfterEnv`, not `setupFilesAfterFramework`. The typo silently skips setup and `@testing-library/jest-dom` matchers are unavailable.
+
+### jsdom missing `scrollIntoView`
+`ChatInterface` calls `bottomRef.current?.scrollIntoView(...)`. jsdom doesn't implement it. Add to `jest.setup.ts`:
+```ts
+window.HTMLElement.prototype.scrollIntoView = jest.fn()
+```
+
+### World Bank cache cross-test pollution
+Module-level `Map` cache persists between Jest test cases when they share the same key. Wrap both read and write in `if (process.env.NODE_ENV !== 'test')` to isolate tests.
+
+### IndicatorChart + BriefingCard year selector conflict
+Do not render the indicator year inside `IndicatorChart` tiles. `BriefingCard` already shows it in its badge. Duplicate year text causes `getByText(/2023/)` to throw "found multiple elements" in both test suites.
