@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic, MODEL } from '@/lib/anthropic'
-import { fetchIndicators, COUNTRIES } from '@/lib/worldbank'
+import { fetchIndicators, fetchExchangeRate, COUNTRIES } from '@/lib/worldbank'
 import { createBriefingSystemPrompt, createBriefingUserPrompt } from '@/lib/prompts'
+import { computeHealthScore } from '@/lib/scoring'
 import type { GenerateBriefRequest, Briefing } from '@/types'
 
 export async function POST(req: NextRequest) {
@@ -9,18 +10,21 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as GenerateBriefRequest
     const { countryCode } = body
 
-    // Validate against allowlist — derive name server-side, never trust client
     const country = COUNTRIES.find((c) => c.code === countryCode)
     if (!country) {
-      return NextResponse.json(
-        { error: 'Invalid country code' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid country code' }, { status: 400 })
     }
 
     const countryName = country.name
 
-    const indicators = await fetchIndicators(countryCode)
+    // Fetch all indicators and exchange rate in parallel
+    const [indicators, exchangeRate] = await Promise.all([
+      fetchIndicators(countryCode),
+      fetchExchangeRate(countryCode),
+    ])
+
+    // Compute health score before calling Claude
+    const healthScore = computeHealthScore(indicators)
 
     const message = await anthropic.messages.create({
       model: MODEL,
@@ -29,7 +33,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: createBriefingUserPrompt(countryName, countryCode, indicators),
+          content: createBriefingUserPrompt(countryName, countryCode, indicators, healthScore),
         },
       ],
     })
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
       parsedData = JSON.parse(rawText)
     } catch {
       return NextResponse.json(
-        { error: 'Failed to parse JSON from model', raw: rawText },
+        { error: 'Failed to parse JSON from model' },
         { status: 500 }
       )
     }
@@ -60,6 +64,8 @@ export async function POST(req: NextRequest) {
       country_code: countryCode,
       country_name: countryName,
       data_year: latestYear,
+      health_score: healthScore,
+      exchange_rate: exchangeRate,
     }
 
     return NextResponse.json({ briefing, indicators })
