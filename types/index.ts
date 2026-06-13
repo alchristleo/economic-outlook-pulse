@@ -6,6 +6,20 @@ export interface WorldBankIndicator {
   unit: string
 }
 
+export interface DimensionScore {
+  name: string
+  score: number   // 0–100
+  weight: number  // e.g. 0.25
+}
+
+export type Sentiment = 'strong' | 'moderate' | 'weak' | 'vulnerable'
+
+export interface EconomicHealthScore {
+  composite: number       // 0–100
+  sentiment: Sentiment
+  dimensions: DimensionScore[]
+}
+
 export interface Briefing {
   title: string
   executive_summary: string
@@ -18,6 +32,8 @@ export interface Briefing {
   country_code: string
   country_name: string
   data_year: number | null
+  health_score: EconomicHealthScore
+  exchange_rate: { currency: string; rate: number } | null
 }
 
 export interface Message {
@@ -32,7 +48,7 @@ export interface ChatRequest {
 }
 
 export interface GenerateBriefRequest {
-  countryCode: string
+  countryCode: string  // name derived server-side from COUNTRIES allowlist
 }
 
 export interface Country {

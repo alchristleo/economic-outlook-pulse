@@ -35,3 +35,26 @@ test('types compile and hold expected values', () => {
   expect(message.role).toBe('user')
   expect(country.code).toBe('ID')
 })
+
+import type { DimensionScore, EconomicHealthScore } from '@/types'
+
+test('DimensionScore holds name and score', () => {
+  const d: DimensionScore = { name: 'Economic Momentum', score: 72, weight: 0.25 }
+  expect(d.score).toBe(72)
+})
+
+test('EconomicHealthScore holds composite and dimensions', () => {
+  const h: EconomicHealthScore = {
+    composite: 65,
+    sentiment: 'moderate',
+    dimensions: [
+      { name: 'Economic Momentum', score: 72, weight: 0.25 },
+      { name: 'Monetary Health', score: 58, weight: 0.20 },
+      { name: 'Fiscal Position', score: 60, weight: 0.20 },
+      { name: 'External Balance', score: 63, weight: 0.20 },
+      { name: 'Institutional Quality', score: 71, weight: 0.15 },
+    ],
+  }
+  expect(h.composite).toBe(65)
+  expect(h.sentiment).toBe('moderate')
+})
