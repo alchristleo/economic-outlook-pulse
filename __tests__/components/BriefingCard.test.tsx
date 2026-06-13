@@ -40,42 +40,42 @@ const mockBriefing: Briefing = {
 
 describe('BriefingCard', () => {
   it('renders the title', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText('Indonesia: Steady as She Goes')).toBeInTheDocument()
   })
 
   it('renders the executive summary', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText(/commodity headwinds/i)).toBeInTheDocument()
   })
 
   it('renders health score', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText('68')).toBeInTheDocument()
   })
 
   it('renders sentiment label', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText(/moderate/i)).toBeInTheDocument()
   })
 
   it('renders a risk item', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText('Commodity price volatility')).toBeInTheDocument()
   })
 
   it('renders the bottom line', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText(/fundamentals remain sound/i)).toBeInTheDocument()
   })
 
   it('renders Prototype badge', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText(/prototype/i)).toBeInTheDocument()
   })
 
   it('renders exchange rate', () => {
-    render(<BriefingCard briefing={mockBriefing} indicators={mockIndicators} />)
+    render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText(/IDR/)).toBeInTheDocument()
   })
 })

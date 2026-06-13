@@ -121,7 +121,7 @@ export default function HomePage() {
 
         {appState === 'ready' && briefing && (
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <BriefingCard briefing={briefing} indicators={indicators} />
+            <BriefingCard briefing={briefing} />
             <ChatInterface briefing={briefing} worldBankData={indicators} />
           </div>
         )}

@@ -4,13 +4,12 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import EconomicRadar from './EconomicRadar'
-import type { Briefing, WorldBankIndicator } from '@/types'
+import type { Briefing } from '@/types'
 import { format } from 'date-fns'
 import { AlertTriangle, TrendingUp, Eye } from 'lucide-react'
 
 interface BriefingCardProps {
   briefing: Briefing
-  indicators: WorldBankIndicator[]
 }
 
 function Section({
@@ -40,7 +39,7 @@ function Section({
   )
 }
 
-export default function BriefingCard({ briefing, indicators }: BriefingCardProps) {
+export default function BriefingCard({ briefing }: BriefingCardProps) {
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
       <div className="h-1 w-full bg-[#E3120B]" />
