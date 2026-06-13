@@ -80,6 +80,7 @@ ${indicatorBlock}
 **Risks:** ${briefing.risks.join('; ')}
 **Opportunities:** ${briefing.opportunities.join('; ')}
 **Bottom line:** ${briefing.bottom_line}
+**What to watch:** ${briefing.what_to_watch.join('; ')}
 
 ## Your role
 - Answer questions about this briefing and broader economic context

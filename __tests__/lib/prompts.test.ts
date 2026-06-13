@@ -59,4 +59,9 @@ describe('createChatSystemPrompt', () => {
     const prompt = createChatSystemPrompt(mockBriefing, mockIndicators)
     expect(prompt).toContain('5.1')
   })
+
+  it('includes voice/role instructions', () => {
+    const prompt = createChatSystemPrompt(mockBriefing, mockIndicators)
+    expect(prompt).toMatch(/never open with|great question/i)
+  })
 })
