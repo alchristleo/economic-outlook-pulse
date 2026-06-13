@@ -68,3 +68,39 @@ describe('formatIndicatorValue', () => {
     expect(formatIndicatorValue('NY.GDP.MKTP.KD.ZG', null)).toBe('N/A')
   })
 })
+
+import { fetchExchangeRate, COUNTRY_CURRENCY } from '@/lib/worldbank'
+
+describe('COUNTRY_CURRENCY', () => {
+  it('maps ID to IDR', () => {
+    expect(COUNTRY_CURRENCY['ID']).toBe('IDR')
+  })
+
+  it('maps GB to GBP', () => {
+    expect(COUNTRY_CURRENCY['GB']).toBe('GBP')
+  })
+})
+
+describe('fetchExchangeRate', () => {
+  beforeEach(() => mockFetch.mockClear())
+
+  it('returns rate for known currency', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: 'success', rates: { IDR: 15800 } }),
+    })
+    const result = await fetchExchangeRate('ID')
+    expect(result).toEqual({ currency: 'IDR', rate: 15800 })
+  })
+
+  it('returns null for unknown country', async () => {
+    const result = await fetchExchangeRate('XX')
+    expect(result).toBeNull()
+  })
+
+  it('returns null on fetch failure', async () => {
+    mockFetch.mockRejectedValue(new Error('Network error'))
+    const result = await fetchExchangeRate('ID')
+    expect(result).toBeNull()
+  })
+})
