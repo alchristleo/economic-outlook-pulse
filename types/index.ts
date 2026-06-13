@@ -33,7 +33,6 @@ export interface ChatRequest {
 
 export interface GenerateBriefRequest {
   countryCode: string
-  countryName: string
 }
 
 export interface Country {

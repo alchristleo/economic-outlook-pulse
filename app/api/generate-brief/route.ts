@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic, MODEL } from '@/lib/anthropic'
-import { fetchIndicators } from '@/lib/worldbank'
+import { fetchIndicators, COUNTRIES } from '@/lib/worldbank'
 import { createBriefingSystemPrompt, createBriefingUserPrompt } from '@/lib/prompts'
 import type { GenerateBriefRequest, Briefing } from '@/types'
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as GenerateBriefRequest
-    const { countryCode, countryName } = body
+    const { countryCode } = body
 
-    if (!countryCode || !countryName) {
+    // Validate against allowlist — derive name server-side, never trust client
+    const country = COUNTRIES.find((c) => c.code === countryCode)
+    if (!country) {
       return NextResponse.json(
-        { error: 'countryCode and countryName are required' },
+        { error: 'Invalid country code' },
         { status: 400 }
       )
     }
+
+    const countryName = country.name
 
     const indicators = await fetchIndicators(countryCode)
 
