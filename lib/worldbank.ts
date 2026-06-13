@@ -35,10 +35,6 @@ export const COUNTRIES: Array<{ code: string; name: string }> = [
 const DEFAULT_INDICATOR_CODES = Object.keys(INDICATORS)
 const cache = new Map<string, { data: WorldBankIndicator[]; ts: number }>()
 const CACHE_TTL_MS = 5 * 60 * 1000
-// Expose for testing — allows test suites to clear between cases
-export function clearCache(): void {
-  cache.clear()
-}
 
 interface WBDataPoint {
   indicator: { id: string; value: string }
@@ -85,7 +81,11 @@ export async function fetchIndicators(
   const data = await Promise.all(
     indicatorCodes.map((code) => fetchSingleIndicator(countryCode, code))
   )
-  cache.set(cacheKey, { data, ts: Date.now() })
+
+  if (process.env.NODE_ENV !== 'test') {
+    cache.set(cacheKey, { data, ts: Date.now() })
+  }
+
   return data
 }
 
