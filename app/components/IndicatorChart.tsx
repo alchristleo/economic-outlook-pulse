@@ -31,9 +31,6 @@ export default function IndicatorChart({ indicators }: IndicatorChartProps) {
             </span>
             <TrendIcon value={ind.value} />
           </div>
-          {ind.year && (
-            <p className="mt-1 text-xs text-gray-400">{ind.year}</p>
-          )}
         </div>
       ))}
     </div>
