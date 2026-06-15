@@ -63,14 +63,16 @@ export interface MonthlyRate {
   rate: number   // local currency units per 1 USD
 }
 
+export interface ConfidenceInterval {
+  upper: number[]  // parallel to forecast[]
+  lower: number[]
+}
+
 export interface CurrencyForecastData {
   currencyCode: string
   historical: MonthlyRate[]
   forecast: MonthlyRate[]
-  forecastCI: {
-    upper: number[]  // parallel to forecast[]
-    lower: number[]
-  }
+  forecastCI: ConfidenceInterval
   regressionSlope: number  // LCU/month trend direction
   rSquared: number         // model fit quality 0–1
 }
