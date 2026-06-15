@@ -13,8 +13,18 @@ Return exactly this shape:
   "risks": ["string — concise, specific, evidence-grounded"],
   "opportunities": ["string — concise, specific, evidence-grounded"],
   "what_to_watch": ["string — near-term catalyst or risk event"],
-  "bottom_line": "string — one sentence. Where is this country in its cycle and what follows?"
+  "bottom_line": "string — one sentence. Where is this country in its cycle and what follows?",
+  "confidence": "high | medium | low",
+  "data_quality_note": "string — one sentence on the data gap or conflict (omit this field when confidence is high)",
+  "suggested_questions": ["string — specific question about this country's economy", "string", "string"]
 }
+
+Set "confidence" based on data quality:
+- "high": multiple fresh indicators (≤2 year lag), consistent and mutually reinforcing signals
+- "medium": some indicators missing or 2–3 years old, or signals point in conflicting directions
+- "low": significant data gaps, indicators >3 years old, or contradictory signals undermine conclusions
+
+Include "data_quality_note" when confidence is medium or low. Omit the field entirely when confidence is high — do not include it as an empty string.
 
 Style rules:
 - Never use "robust", "vibrant", "exciting", "amazing", or superlatives
@@ -292,6 +302,21 @@ ${indicatorBlock}
 **What to watch:** ${briefing.what_to_watch.join('; ')}
 **Bottom line:** ${briefing.bottom_line}
 
+## Tools available
+You have access to the \`fetch_country_indicators\` tool. Use it when the user asks to compare ${briefing.country_name} with another country, or requests economic data on a different country.
+
+Rules:
+- Call the tool once per comparison country (maximum 3 calls per response)
+- After receiving results, embed ALL comparison data in your response using EXACTLY this format on its own line before your narrative text:
+
+[COMPARISON_DATA]{"base_country_code":"${briefing.country_code}","countries":[REPLACE_WITH_TOOL_RESULTS]}[/COMPARISON_DATA]
+
+Where REPLACE_WITH_TOOL_RESULTS is an array of objects, each using the exact JSON from the tool result:
+{"code":"VN","name":"Vietnam","indicators":[...exact indicators array from tool result...]}
+
+- Only include [COMPARISON_DATA] if you actually called the tool. Never include it for regular questions.
+- Do not invent or modify indicator values — use exactly what the tool returned.
+
 ## Your role
 - Answer questions through the lens of the dimension scores and raw data
 - Reference specific scores when relevant ("Institutional Quality at 5/10 suggests…")
@@ -300,4 +325,45 @@ ${indicatorBlock}
 - 2–4 sentences unless the question demands more
 - Never open with "Great question!" or filler
 - Use "is likely to" and "suggests" over definitive future claims`
+}
+
+export function createCriticPrompt(draftJson: string): string {
+  return `You are a rigorous economics editor reviewing an AI-generated briefing. Identify exactly 3 weaknesses. Focus on: unsupported claims, missing downside risks, Economist tone lapses, or outdated framing. Be specific and concise.
+
+Respond with a JSON array of exactly 3 strings. Do not include markdown fences or any text outside the JSON array:
+["weakness 1", "weakness 2", "weakness 3"]
+
+Briefing to review:
+${draftJson}`
+}
+
+export function createRevisionPrompt(draftJson: string, critique: string[]): string {
+  const critiqueBlock = critique.length > 0
+    ? critique.map((c, i) => `${i + 1}. ${c}`).join('\n')
+    : '(no specific critique — perform a general quality pass)'
+
+  return `Revise this economic briefing to address the critique. Maintain The Economist's voice: concise, authoritative, dry.
+
+The revised output must be valid JSON matching this exact schema (no markdown, no preamble):
+{
+  "title": "string",
+  "executive_summary": "string",
+  "risks": ["string"],
+  "opportunities": ["string"],
+  "what_to_watch": ["string"],
+  "bottom_line": "string — exactly one sentence",
+  "confidence": "high | medium | low",
+  "data_quality_note": "string (omit entirely when confidence is high)",
+  "suggested_questions": ["string — specific question about this country's economy", "string", "string"]
+}
+
+Field rules:
+- suggested_questions: exactly 3 questions, specific to this country and briefing content. Not generic ("What are the main risks?" is not acceptable). Reference actual indicators, risks, or opportunities from the briefing. Use the country name.
+- data_quality_note: omit entirely when confidence is high.
+
+Original briefing:
+${draftJson}
+
+Critique:
+${critiqueBlock}`
 }

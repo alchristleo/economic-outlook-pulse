@@ -32,6 +32,7 @@ export default function HomePage() {
   const [briefing, setBriefing] = useState<Briefing | null>(null)
   const [indicators, setIndicators] = useState<WorldBankIndicator[]>([])
   const [currencyForecast, setCurrencyForecast] = useState<CurrencyForecastData | null>(null)
+  const [loadingStep, setLoadingStep] = useState<string>('')
 
   const [activeTool, setActiveTool] = useState<ActiveTool>('none')
   const [scenario, setScenario] = useState<ScenarioResult | null>(null)
@@ -126,6 +127,9 @@ export default function HomePage() {
     setNewsArticles([])
     setNewsError(null)
     setAppState('loading')
+    setLoadingStep('Fetching economic data…')
+    const stepTimer1 = setTimeout(() => setLoadingStep('Generating analysis…'), 2500)
+    const stepTimer2 = setTimeout(() => setLoadingStep('Refining analysis…'), 9000)
     setBriefing(null)
     setCurrencyForecast(null)
 
@@ -158,6 +162,9 @@ export default function HomePage() {
     } catch {
       toast.error('Failed to generate briefing. Please try again.')
       setAppState('idle')
+    } finally {
+      clearTimeout(stepTimer1)
+      clearTimeout(stepTimer2)
     }
   }
 
@@ -234,7 +241,8 @@ export default function HomePage() {
         {appState === 'loading' && (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#E3120B]" />
-            <p className="text-gray-500">Fetching IMF data and generating brief&hellip;</p>
+            <p className="text-gray-500">{loadingStep}</p>
+            <p className="mt-1 text-xs text-gray-400">This may take 10–15 seconds</p>
           </div>
         )}
 

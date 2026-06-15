@@ -7,8 +7,23 @@ import { Loader2, AlertTriangle, TrendingUp, Eye, BarChart2, ArrowLeftRight } fr
 import EconomicRadar from './EconomicRadar'
 import CurrencyForecast from './CurrencyForecast'
 import LensCard from './LensCard'
-import type { Briefing, CurrencyForecastData, LensResult, LensType } from '@/types'
+import type { Briefing, CurrencyForecastData, LensResult, LensType, ConfidenceLevel } from '@/types'
 import { format } from 'date-fns'
+
+const CONFIDENCE_CONFIG: Record<ConfidenceLevel, { label: string; className: string }> = {
+  high: {
+    label: 'High confidence',
+    className: 'border-green-200 bg-green-50 text-green-700',
+  },
+  medium: {
+    label: 'Medium confidence',
+    className: 'border-amber-200 bg-amber-50 text-amber-700',
+  },
+  low: {
+    label: 'Low confidence',
+    className: 'border-red-200 bg-red-50 text-red-700',
+  },
+}
 
 interface BriefingCardProps {
   briefing: Briefing
