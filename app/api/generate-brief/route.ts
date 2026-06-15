@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { anthropic, MODEL } from '@/lib/anthropic'
+import { anthropic, MODEL, parseJsonResponse } from '@/lib/anthropic'
 import { fetchIndicators } from '@/lib/imf'
 import { fetchExchangeRate, COUNTRIES } from '@/lib/worldbank'
 import { createBriefingSystemPrompt, createBriefingUserPrompt } from '@/lib/prompts'
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     let parsedData: Record<string, unknown>
     try {
-      parsedData = JSON.parse(rawText)
+      parsedData = parseJsonResponse(rawText) as Record<string, unknown>
     } catch {
       return NextResponse.json(
         { error: 'Failed to parse JSON from model' },
