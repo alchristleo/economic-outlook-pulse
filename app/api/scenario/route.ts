@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     const message = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1000,
+      max_tokens: 2000,
       system: createScenarioSystemPrompt(),
       messages: [
         {
