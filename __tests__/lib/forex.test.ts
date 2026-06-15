@@ -2,6 +2,7 @@ import {
   linearRegression,
   forecastPoints,
   sampleMonthlyRates,
+  computeCurrencyForecast,
 } from '@/lib/forex'
 import type { MonthlyRate } from '@/types'
 
@@ -37,7 +38,7 @@ describe('forecastPoints', () => {
   it('returns the requested number of forecast steps', () => {
     const points = Array.from({ length: 24 }, (_, i) => ({ x: i, y: 15000 + i * 50 }))
     const reg = linearRegression(points)
-    const result = forecastPoints(reg, 24, 12, points.length)
+    const result = forecastPoints(reg, 24, 12)
     expect(result).toHaveLength(12)
   })
 
@@ -47,7 +48,7 @@ describe('forecastPoints', () => {
       y: 15000 + i * 50 + (Math.random() - 0.5) * 200,
     }))
     const reg = linearRegression(points)
-    const result = forecastPoints(reg, 24, 12, points.length)
+    const result = forecastPoints(reg, 24, 12)
     result.forEach(({ value, upper, lower }) => {
       expect(upper).toBeGreaterThan(value)
       expect(lower).toBeLessThan(value)
@@ -60,7 +61,7 @@ describe('forecastPoints', () => {
       y: 15000 + i * 30 + (Math.random() - 0.5) * 300,
     }))
     const reg = linearRegression(points)
-    const result = forecastPoints(reg, 36, 12, points.length)
+    const result = forecastPoints(reg, 36, 12)
     const firstSpread = result[0].upper - result[0].lower
     const lastSpread = result[11].upper - result[11].lower
     expect(lastSpread).toBeGreaterThan(firstSpread)
@@ -88,5 +89,32 @@ describe('sampleMonthlyRates', () => {
     }
     const result = sampleMonthlyRates(rates, 'IDR')
     expect(result.map(r => r.month)).toEqual(['2024-01', '2024-02', '2024-03'])
+  })
+})
+
+describe('computeCurrencyForecast', () => {
+  it('returns 12 forecast months after the last historical month', () => {
+    const historical = Array.from({ length: 24 }, (_, i) => ({
+      month: `2023-${String(i % 12 + 1).padStart(2, '0')}`,
+      rate: 15000 + i * 50,
+    }))
+    const result = computeCurrencyForecast('IDR', historical, 12)
+    expect(result.currencyCode).toBe('IDR')
+    expect(result.forecast).toHaveLength(12)
+    expect(result.forecastCI.upper).toHaveLength(12)
+    expect(result.forecastCI.lower).toHaveLength(12)
+  })
+
+  it('forecast CI preserves 2 decimal precision (not rounded to int)', () => {
+    // Use EUR-scale rates (~0.9) to test sub-unit currency precision
+    const historical = Array.from({ length: 24 }, (_, i) => ({
+      month: `2023-${String(i % 12 + 1).padStart(2, '0')}`,
+      rate: 0.9 + i * 0.001,
+    }))
+    const result = computeCurrencyForecast('EUR', historical, 12)
+    // All forecast rates should be > 0 (not rounded to 0)
+    result.forecast.forEach(r => expect(r.rate).toBeGreaterThan(0))
+    result.forecastCI.upper.forEach(v => expect(v).toBeGreaterThan(0))
+    result.forecastCI.lower.forEach(v => expect(v).toBeGreaterThan(0))
   })
 })

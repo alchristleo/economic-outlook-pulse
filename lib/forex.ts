@@ -77,7 +77,6 @@ export function forecastPoints(
   reg: RegressionResult,
   startX: number,
   steps: number,
-  n: number,
   zScore = 1.96
 ): Array<{ value: number; upper: number; lower: number }> {
   return Array.from({ length: steps }, (_, h) => {
@@ -85,7 +84,7 @@ export function forecastPoints(
     const value = reg.slope * x + reg.intercept
     const se =
       reg.residualStd *
-      Math.sqrt(1 + 1 / n + (x - reg.xMean) ** 2 / (reg.xSumSqDev || 1))
+      Math.sqrt(1 + 1 / reg.n + (x - reg.xMean) ** 2 / (reg.xSumSqDev || 1))
     const margin = zScore * se
     return { value, upper: value + margin, lower: value - margin }
   })
@@ -109,11 +108,11 @@ export function computeCurrencyForecast(
 
   const lastIndex = historical.length - 1
   const lastMonth = historical[lastIndex].month
-  const projections = forecastPoints(reg, lastIndex + 1, forecastMonths, historical.length)
+  const projections = forecastPoints(reg, lastIndex + 1, forecastMonths)
 
   const forecast: MonthlyRate[] = projections.map((p, i) => ({
     month: addMonths(lastMonth, i + 1),
-    rate: Math.max(0, Math.round(p.value)),
+    rate: Math.max(0, Math.round(p.value * 100) / 100),
   }))
 
   return {
@@ -121,8 +120,8 @@ export function computeCurrencyForecast(
     historical,
     forecast,
     forecastCI: {
-      upper: projections.map(p => Math.max(0, Math.round(p.upper))),
-      lower: projections.map(p => Math.max(0, Math.round(p.lower))),
+      upper: projections.map(p => Math.max(0, Math.round(p.upper * 100) / 100)),
+      lower: projections.map(p => Math.max(0, Math.round(p.lower * 100) / 100)),
     },
     regressionSlope: Math.round(reg.slope * 100) / 100,
     rSquared: Math.round(reg.rSquared * 1000) / 1000,
