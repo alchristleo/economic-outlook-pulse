@@ -59,7 +59,9 @@ function buildChartData(data: CurrencyForecastData): { points: ChartPoint[]; bou
 }
 
 function formatRate(value: number): string {
-  return value.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  if (value >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  if (value >= 10)   return value.toLocaleString(undefined, { maximumFractionDigits: 1 })
+  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })
 }
 
 // Show every 6th x-axis label to avoid crowding
