@@ -11,6 +11,8 @@ import {
 import { computeHealthScore } from '@/lib/scoring'
 import type { GenerateBriefRequest, Briefing, ConfidenceLevel } from '@/types'
 
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as GenerateBriefRequest
@@ -59,6 +61,11 @@ export async function POST(req: NextRequest) {
       .map((block) => (block.type === 'text' ? block.text : ''))
       .join('')
 
+    if (!draftText) {
+      console.error('[generate-brief] Pass 1 returned no text block')
+      return NextResponse.json({ error: 'Model returned no text content' }, { status: 500 })
+    }
+
     // Pass 2: Critic — identify 3 weaknesses in the draft
     const criticMessage = await anthropic.messages.create({
       model: MODEL_FAST,
@@ -89,6 +96,11 @@ export async function POST(req: NextRequest) {
     const rawText =
       finalMessage.content[0]?.type === 'text' ? finalMessage.content[0].text : ''
 
+    if (!rawText) {
+      console.error('[generate-brief] Pass 3 returned no text block')
+      return NextResponse.json({ error: 'Model revision returned no content' }, { status: 500 })
+    }
+
     let parsedData: Record<string, unknown>
     try {
       parsedData = JSON.parse(rawText)
@@ -115,11 +127,10 @@ export async function POST(req: NextRequest) {
       data_year: latestYear,
       health_score: healthScore,
       exchange_rate: exchangeRate,
-      confidence: (['high', 'medium', 'low'] as ConfidenceLevel[]).includes(
-        parsedData.confidence as ConfidenceLevel
-      )
-        ? (parsedData.confidence as ConfidenceLevel)
-        : 'medium',
+      confidence: ((): ConfidenceLevel => {
+        const c = parsedData.confidence
+        return c === 'high' || c === 'medium' || c === 'low' ? c : 'medium'
+      })(),
       data_quality_note:
         typeof parsedData.data_quality_note === 'string' && parsedData.data_quality_note.length > 0
           ? parsedData.data_quality_note
