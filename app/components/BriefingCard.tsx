@@ -2,18 +2,12 @@
 
 import { useRef, useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Button } from '@/components/ui/button'
-import { Loader2, AlertTriangle, TrendingUp, Eye } from 'lucide-react'
+import { Loader2, AlertTriangle, TrendingUp, Eye, BarChart2, ArrowLeftRight } from 'lucide-react'
 import EconomicRadar from './EconomicRadar'
 import CurrencyForecast from './CurrencyForecast'
-import DebateCard from './DebateCard'
 import LensCard from './LensCard'
-import NewsCheckCard from './NewsCheckCard'
-import ScenarioInput from './ScenarioInput'
-import ScenarioCard from './ScenarioCard'
-import type { Briefing, CurrencyForecastData, DebateResult, LensResult, LensType, NewsArticle, NewsCheckResult, ScenarioResult } from '@/types'
+import type { Briefing, CurrencyForecastData, LensResult, LensType } from '@/types'
 import { format } from 'date-fns'
 
 interface BriefingCardProps {
@@ -56,43 +50,10 @@ function Section({
 }
 
 export default function BriefingCard({ briefing, currencyForecast }: BriefingCardProps) {
-  const [debate, setDebate] = useState<DebateResult | null>(null)
-  const [debateLoading, setDebateLoading] = useState(false)
-
   const [activeLens, setActiveLens] = useState<LensType | 'standard'>('standard')
   const [lensLoading, setLensLoading] = useState(false)
   const [currentLensResult, setCurrentLensResult] = useState<LensResult | undefined>(undefined)
   const lensCache = useRef<Map<string, LensResult>>(new Map())
-
-  const [newsResult, setNewsResult] = useState<NewsCheckResult | null>(null)
-  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
-  const [newsLoading, setNewsLoading] = useState(false)
-  const [newsError, setNewsError] = useState<string | null>(null)
-
-  const [showScenario, setShowScenario] = useState(false)
-  const [scenario, setScenario] = useState<ScenarioResult | null>(null)
-  const [scenarioHypothesis, setScenarioHypothesis] = useState('')
-  const [scenarioLoading, setScenarioLoading] = useState(false)
-
-  async function handleDebate() {
-    if (debateLoading) return
-    setDebateLoading(true)
-    setDebate(null)
-    try {
-      const res = await fetch('/api/debate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ countryCode: briefing.country_code, briefing }),
-      })
-      if (!res.ok) throw new Error('Debate failed')
-      const data = (await res.json()) as { debate: DebateResult }
-      setDebate(data.debate)
-    } catch {
-      console.error('Debate failed')
-    } finally {
-      setDebateLoading(false)
-    }
-  }
 
   async function handleLensChange(lens: LensType | 'standard') {
     setActiveLens(lens)
@@ -127,119 +88,47 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
     }
   }
 
-  async function handleScenario(hypothesis: string) {
-    setScenarioLoading(true)
-    setScenario(null)
-    setScenarioHypothesis(hypothesis)
-    try {
-      const res = await fetch('/api/scenario', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ countryCode: briefing.country_code, hypothesis, briefing }),
-      })
-      if (!res.ok) throw new Error('Scenario failed')
-      const data = (await res.json()) as { scenario: ScenarioResult }
-      setScenario(data.scenario)
-    } catch {
-      console.error('Scenario failed')
-    } finally {
-      setScenarioLoading(false)
-    }
-  }
-
-  async function handleNewsCheck() {
-    if (newsLoading) return
-    setNewsLoading(true)
-    setNewsResult(null)
-    setNewsArticles([])
-    setNewsError(null)
-    try {
-      const res = await fetch('/api/news-check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ countryCode: briefing.country_code, briefing }),
-      })
-      if (!res.ok) {
-        const err = (await res.json()) as { error: string }
-        setNewsError(err.error ?? 'News check failed')
-        return
-      }
-      const data = (await res.json()) as { result: NewsCheckResult; articles: NewsArticle[] }
-      setNewsResult(data.result)
-      setNewsArticles(data.articles)
-    } catch {
-      setNewsError('News check failed')
-    } finally {
-      setNewsLoading(false)
-    }
-  }
-
-
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
       <div className="h-1 w-full bg-[#E3120B]" />
-      <CardHeader className="space-y-3 pb-4">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#E3120B]">
-              The Pulse — Economic Briefing
-            </p>
-            <h1 className="mt-1 text-2xl font-bold leading-tight text-[#1A1A1A]">
-              {briefing.title}
-            </h1>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <Badge className="border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium">
-              Prototype
-            </Badge>
-            {briefing.data_year && (
-              <Badge variant="outline" className="text-xs text-gray-500">
-                IMF WEO · {briefing.data_year}
-              </Badge>
-            )}
-            {briefing.exchange_rate && (
-              <Badge variant="outline" className="text-xs text-gray-500">
-                {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
-              </Badge>
-            )}
-            <div className="flex flex-wrap gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setShowScenario((v) => !v); setScenario(null) }}
-                className={`h-7 text-xs border-gray-200 hover:border-amber-500 hover:text-amber-600 ${showScenario ? 'border-amber-400 text-amber-600 bg-amber-50' : 'text-gray-600'}`}
-              >
-                ⚡ What If?
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDebate}
-                disabled={debateLoading}
-                className="h-7 text-xs border-gray-200 text-gray-600 hover:border-[#E3120B] hover:text-[#E3120B]"
-              >
-                {debateLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : '⚔ Bull vs Bear'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNewsCheck}
-                disabled={newsLoading}
-                className="h-7 text-xs border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600"
-              >
-                {newsLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : '📰 vs. News'}
-              </Button>
-            </div>
-          </div>
+      <CardHeader className="space-y-4 pb-4">
+        {/* Title */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#E3120B]">
+            The Pulse — Economic Briefing
+          </p>
+          <h1 className="mt-1 text-2xl font-bold leading-tight text-[#1A1A1A]">
+            {briefing.title}
+          </h1>
         </div>
 
-        {/* Investor Lens segmented control */}
-        <div className="flex gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-1 w-fit shadow-inner">
+        {/* Badges — horizontal row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+            <AlertTriangle className="h-3 w-3" />
+            Prototype
+          </span>
+          {briefing.data_year && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+              <BarChart2 className="h-3 w-3" />
+              IMF WEO · {briefing.data_year}
+            </span>
+          )}
+          {briefing.exchange_rate && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+              <ArrowLeftRight className="h-3 w-3" />
+              {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
+            </span>
+          )}
+        </div>
+
+        {/* Investor Lens segmented control — full width */}
+        <div className="flex gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-1 shadow-inner">
           {LENS_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleLensChange(tab.id)}
-              className={`cursor-pointer px-3 py-1.5 rounded-md text-xs font-medium transition-all select-none ${
+              className={`flex-1 cursor-pointer rounded-md py-1.5 text-xs font-medium transition-all select-none ${
                 activeLens === tab.id
                   ? 'bg-white text-[#1A1A1A] shadow-sm ring-1 ring-gray-200'
                   : 'text-gray-500 hover:bg-white/60 hover:text-gray-800'
@@ -252,7 +141,7 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
 
         <p className="text-base leading-relaxed text-gray-700">{briefing.executive_summary}</p>
 
-        {/* Lens result below executive summary */}
+        {/* Lens result */}
         {activeLens !== 'standard' && (
           <div>
             {lensLoading ? (
@@ -279,7 +168,6 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Primary: Economic Health Radar */}
         <EconomicRadar healthScore={briefing.health_score} />
 
         <Separator />
@@ -319,20 +207,6 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
             {briefing.bottom_line}
           </p>
         </div>
-
-        {showScenario && (
-          <div className="space-y-3">
-            <ScenarioInput onRun={handleScenario} isLoading={scenarioLoading} />
-            {scenario && <ScenarioCard scenario={scenario} hypothesis={scenarioHypothesis} />}
-          </div>
-        )}
-
-        {debate && <DebateCard debate={debate} />}
-
-        {newsError && (
-          <p className="text-xs text-amber-600 bg-amber-50 rounded px-3 py-2">{newsError}</p>
-        )}
-        {newsResult && <NewsCheckCard result={newsResult} articles={newsArticles} />}
 
         <p className="text-right text-xs text-gray-400">
           Generated {format(new Date(briefing.generated_at), 'PPP p')}
