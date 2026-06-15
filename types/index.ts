@@ -57,3 +57,20 @@ export interface Country {
   name: string
   region?: string
 }
+
+export interface MonthlyRate {
+  month: string  // ISO "YYYY-MM"
+  rate: number   // local currency units per 1 USD
+}
+
+export interface CurrencyForecastData {
+  currencyCode: string
+  historical: MonthlyRate[]
+  forecast: MonthlyRate[]
+  forecastCI: {
+    upper: number[]  // parallel to forecast[]
+    lower: number[]
+  }
+  regressionSlope: number  // LCU/month trend direction
+  rSquared: number         // model fit quality 0–1
+}
