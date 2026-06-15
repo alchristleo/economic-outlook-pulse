@@ -79,4 +79,29 @@ describe('BriefingCard', () => {
     render(<BriefingCard briefing={mockBriefing} />)
     expect(screen.getByText(/IDR/)).toBeInTheDocument()
   })
+
+  it('renders high confidence badge', () => {
+    render(<BriefingCard briefing={{ ...mockBriefing, confidence: 'high' }} />)
+    expect(screen.getByText('High confidence')).toBeInTheDocument()
+  })
+
+  it('renders medium confidence badge', () => {
+    render(<BriefingCard briefing={{ ...mockBriefing, confidence: 'medium' }} />)
+    expect(screen.getByText('Medium confidence')).toBeInTheDocument()
+  })
+
+  it('renders low confidence badge', () => {
+    render(<BriefingCard briefing={{ ...mockBriefing, confidence: 'low' }} />)
+    expect(screen.getByText('Low confidence')).toBeInTheDocument()
+  })
+
+  it('shows data_quality_note as title attribute on confidence badge', () => {
+    render(
+      <BriefingCard
+        briefing={{ ...mockBriefing, confidence: 'low', data_quality_note: 'GDP data lags 3 years' }}
+      />
+    )
+    const badge = screen.getByText('Low confidence')
+    expect(badge.closest('[title]')?.getAttribute('title')).toBe('GDP data lags 3 years')
+  })
 })
