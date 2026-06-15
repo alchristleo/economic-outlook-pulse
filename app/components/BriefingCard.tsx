@@ -234,15 +234,15 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
         </div>
 
         {/* Investor Lens segmented control */}
-        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+        <div className="flex gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-1 w-fit shadow-inner">
           {LENS_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleLensChange(tab.id)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+              className={`cursor-pointer px-3 py-1.5 rounded-md text-xs font-medium transition-all select-none ${
                 activeLens === tab.id
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white text-[#1A1A1A] shadow-sm ring-1 ring-gray-200'
+                  : 'text-gray-500 hover:bg-white/60 hover:text-gray-800'
               }`}
             >
               {tab.label}
@@ -256,9 +256,20 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
         {activeLens !== 'standard' && (
           <div>
             {lensLoading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Analysing through {LENS_TABS.find((t) => t.id === activeLens)?.label} lens…
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-3 animate-pulse">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <span className="text-sm font-medium text-gray-500">
+                    Analysing through {LENS_TABS.find((t) => t.id === activeLens)?.label} lens…
+                  </span>
+                </div>
+                <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="space-y-2">
+                  <div className="h-2.5 bg-gray-200 rounded w-full" />
+                  <div className="h-2.5 bg-gray-200 rounded w-5/6" />
+                  <div className="h-2.5 bg-gray-200 rounded w-4/6" />
+                </div>
+                <div className="h-8 bg-red-100 rounded w-2/3" />
               </div>
             ) : currentLensResult ? (
               <LensCard result={currentLensResult} />
