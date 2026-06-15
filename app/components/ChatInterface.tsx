@@ -4,12 +4,31 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SendHorizonal, Bot, User } from 'lucide-react'
-import type { Briefing, Message, WorldBankIndicator } from '@/types'
+import ComparisonCard from '@/app/components/ComparisonCard'
+import type { Briefing, Message, WorldBankIndicator, ComparisonData } from '@/types'
 
 interface ChatInterfaceProps {
   briefing: Briefing
   worldBankData: WorldBankIndicator[]
   disabled?: boolean
+}
+
+const COMPARISON_MARKER = /\[COMPARISON_DATA\]([\s\S]*?)\[\/COMPARISON_DATA\]/
+
+function parseMessageContent(raw: string): {
+  text: string
+  comparisonData: ComparisonData | null
+} {
+  const match = raw.match(COMPARISON_MARKER)
+  if (!match) return { text: raw, comparisonData: null }
+  try {
+    return {
+      text: raw.replace(match[0], '').trim(),
+      comparisonData: JSON.parse(match[1]) as ComparisonData,
+    }
+  } catch {
+    return { text: raw.replace(match[0], '').trim(), comparisonData: null }
+  }
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -67,6 +86,17 @@ export default function ChatInterface({
           { role: 'assistant', content: accumulated },
         ])
       }
+
+      // Parse and strip COMPARISON_DATA marker from final accumulated text
+      const { text, comparisonData } = parseMessageContent(accumulated)
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: 'assistant' as const,
+          content: text,
+          comparisonData: comparisonData ?? undefined,
+        },
+      ])
     } catch {
       setMessages((prev) => [
         ...prev.slice(0, -1),
@@ -122,17 +152,26 @@ export default function ChatInterface({
                 <Bot className="h-3.5 w-3.5 text-white" />
               )}
             </div>
-            <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'bg-gray-50 text-gray-800'
-              }`}
-            >
-              {msg.content ||
-                (isStreaming && i === messages.length - 1 ? (
-                  <span className="animate-pulse text-gray-400">&#9612;</span>
-                ) : null)}
+            <div className="max-w-[85%] flex flex-col gap-2">
+              {msg.comparisonData && (
+                <ComparisonCard
+                  data={msg.comparisonData}
+                  baseCountryName={briefing.country_name}
+                  baseIndicators={briefing.key_indicators}
+                />
+              )}
+              <div
+                className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                  msg.role === 'user'
+                    ? 'bg-[#1A1A1A] text-white'
+                    : 'bg-gray-50 text-gray-800'
+                }`}
+              >
+                {msg.content ||
+                  (isStreaming && i === messages.length - 1 ? (
+                    <span className="animate-pulse text-gray-400">&#9612;</span>
+                  ) : null)}
+              </div>
             </div>
           </div>
         ))}
