@@ -111,7 +111,7 @@ export default function CurrencyForecast({ data }: Props) {
             width={60}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [formatRate(value), name]}
+            formatter={(value, name) => [typeof value === 'number' ? formatRate(value) : String(value ?? ''), String(name ?? '')]}
             labelFormatter={(label) => label}
             contentStyle={{ fontSize: 11, borderRadius: 4 }}
           />
