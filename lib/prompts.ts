@@ -15,7 +15,8 @@ Return exactly this shape:
   "what_to_watch": ["string — near-term catalyst or risk event"],
   "bottom_line": "string — one sentence. Where is this country in its cycle and what follows?",
   "confidence": "high | medium | low",
-  "data_quality_note": "string — one sentence on the data gap or conflict (omit this field when confidence is high)"
+  "data_quality_note": "string — one sentence on the data gap or conflict (omit this field when confidence is high)",
+  "suggested_questions": ["string — specific question about this country's economy", "string", "string"]
 }
 
 Set "confidence" based on data quality:
@@ -147,8 +148,13 @@ The revised output must be valid JSON matching this exact schema (no markdown, n
   "what_to_watch": ["string"],
   "bottom_line": "string — exactly one sentence",
   "confidence": "high | medium | low",
-  "data_quality_note": "string (omit entirely when confidence is high)"
+  "data_quality_note": "string (omit entirely when confidence is high)",
+  "suggested_questions": ["string — specific question about this country's economy", "string", "string"]
 }
+
+Field rules:
+- suggested_questions: exactly 3 questions, specific to this country and briefing content. Not generic ("What are the main risks?" is not acceptable). Reference actual indicators, risks, or opportunities from the briefing. Use the country name.
+- data_quality_note: omit entirely when confidence is high.
 
 Original briefing:
 ${draftJson}

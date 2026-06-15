@@ -36,11 +36,12 @@ export async function POST(req: NextRequest) {
 
     const systemPromptText = createBriefingSystemPrompt()
 
-    // Pass 1: Draft — extended thinking + prompt cache on static system prompt
+    // Pass 1: Draft — extended thinking (adaptive) + prompt cache on static system prompt
+    // claude-opus-4-8 uses thinking.type="adaptive" not "enabled"
     const draftMessage = await anthropic.messages.create({
       model: MODEL_DRAFT,
       max_tokens: 6000,
-      thinking: { type: 'enabled', budget_tokens: 4000 },
+      thinking: { type: 'adaptive' },
       system: [
         {
           type: 'text' as const,
@@ -136,6 +137,9 @@ export async function POST(req: NextRequest) {
         typeof parsedData.data_quality_note === 'string' && parsedData.data_quality_note.length > 0
           ? parsedData.data_quality_note
           : undefined,
+      suggested_questions: Array.isArray(parsedData.suggested_questions)
+        ? (parsedData.suggested_questions as string[]).slice(0, 3)
+        : undefined,
     }
 
     return NextResponse.json({ briefing, indicators })

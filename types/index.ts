@@ -39,6 +39,7 @@ export interface Briefing {
   exchange_rate: { currency: string; rate: number } | null
   confidence: ConfidenceLevel
   data_quality_note?: string
+  suggested_questions?: string[]  // LLM-generated, country-specific chat starters
 }
 
 export interface Message {
