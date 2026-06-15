@@ -15,15 +15,15 @@ Return exactly this shape:
   "what_to_watch": ["string — near-term catalyst or risk event"],
   "bottom_line": "string — one sentence. Where is this country in its cycle and what follows?",
   "confidence": "high | medium | low",
-  "data_quality_note": "string (omit this field entirely when confidence is high)"
+  "data_quality_note": "string — one sentence on the data gap or conflict (omit this field when confidence is high)"
 }
 
 Set "confidence" based on data quality:
 - "high": multiple fresh indicators (≤2 year lag), consistent and mutually reinforcing signals
-- "medium": some indicators missing or >2 years old, or signals point in conflicting directions
+- "medium": some indicators missing or 2–3 years old, or signals point in conflicting directions
 - "low": significant data gaps, indicators >3 years old, or contradictory signals undermine conclusions
 
-Include "data_quality_note" (one sentence) when confidence is medium or low. Omit the field entirely when confidence is high.
+Include "data_quality_note" when confidence is medium or low. Omit the field entirely when confidence is high — do not include it as an empty string.
 
 Style rules:
 - Never use "robust", "vibrant", "exciting", "amazing", or superlatives
@@ -134,9 +134,21 @@ ${draftJson}`
 export function createRevisionPrompt(draftJson: string, critique: string[]): string {
   const critiqueBlock = critique.length > 0
     ? critique.map((c, i) => `${i + 1}. ${c}`).join('\n')
-    : '(no specific critique — general quality pass)'
+    : '(no specific critique — perform a general quality pass)'
 
-  return `Revise this economic briefing to address the critique. Maintain The Economist's voice: concise, authoritative, dry. Return only the JSON object — no markdown, no preamble. Match the original schema exactly, including the confidence field.
+  return `Revise this economic briefing to address the critique. Maintain The Economist's voice: concise, authoritative, dry.
+
+The revised output must be valid JSON matching this exact schema (no markdown, no preamble):
+{
+  "title": "string",
+  "executive_summary": "string",
+  "risks": ["string"],
+  "opportunities": ["string"],
+  "what_to_watch": ["string"],
+  "bottom_line": "string — exactly one sentence",
+  "confidence": "high | medium | low",
+  "data_quality_note": "string (omit entirely when confidence is high)"
+}
 
 Original briefing:
 ${draftJson}
