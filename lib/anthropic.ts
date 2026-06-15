@@ -9,6 +9,8 @@ export const anthropic = new Anthropic({
 })
 
 export const MODEL = 'claude-sonnet-4-6'
+export const MODEL_DRAFT = 'claude-opus-4-8'
+export const MODEL_FAST = 'claude-sonnet-4-6'
 
 export function streamToReadableStream(
   stream: ReturnType<typeof anthropic.messages.stream>

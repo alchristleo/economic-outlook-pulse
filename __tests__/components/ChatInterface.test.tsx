@@ -26,6 +26,7 @@ const mockBriefing: Briefing = {
     ],
   },
   exchange_rate: null,
+  confidence: 'high',
 }
 
 describe('ChatInterface', () => {

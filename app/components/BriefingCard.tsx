@@ -5,9 +5,24 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import EconomicRadar from './EconomicRadar'
 import CurrencyForecast from './CurrencyForecast'
-import type { Briefing, CurrencyForecastData } from '@/types'
+import type { Briefing, CurrencyForecastData, ConfidenceLevel } from '@/types'
 import { format } from 'date-fns'
 import { AlertTriangle, TrendingUp, Eye } from 'lucide-react'
+
+const CONFIDENCE_CONFIG: Record<ConfidenceLevel, { label: string; className: string }> = {
+  high: {
+    label: 'High confidence',
+    className: 'border-green-200 bg-green-50 text-green-700',
+  },
+  medium: {
+    label: 'Medium confidence',
+    className: 'border-amber-200 bg-amber-50 text-amber-700',
+  },
+  low: {
+    label: 'Low confidence',
+    className: 'border-red-200 bg-red-50 text-red-700',
+  },
+}
 
 interface BriefingCardProps {
   briefing: Briefing
@@ -69,6 +84,13 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
                 {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
               </Badge>
             )}
+            <Badge
+              variant="outline"
+              className={`text-xs font-medium ${CONFIDENCE_CONFIG[briefing.confidence].className}`}
+              title={briefing.data_quality_note ?? ''}
+            >
+              {CONFIDENCE_CONFIG[briefing.confidence].label}
+            </Badge>
           </div>
         </div>
         <p className="text-base leading-relaxed text-gray-700">{briefing.executive_summary}</p>

@@ -37,6 +37,7 @@ const briefing: Briefing = {
     ],
   },
   exchange_rate: null,
+  confidence: 'high',
 }
 
 const country: Country = { code: 'ID', name: 'Indonesia' }

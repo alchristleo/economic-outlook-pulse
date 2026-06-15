@@ -30,7 +30,7 @@ export default function ChatInterface({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages.length])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -93,7 +93,10 @@ export default function ChatInterface({
             <Bot className="h-8 w-8 text-gray-300" />
             <p className="text-sm text-gray-400">Ask me anything about this briefing</p>
             <div className="mt-1 flex flex-col gap-2 w-full">
-              {SUGGESTED_QUESTIONS.map((q) => (
+              {(briefing.suggested_questions?.length
+                ? briefing.suggested_questions
+                : SUGGESTED_QUESTIONS
+              ).map((q) => (
                 <button
                   key={q}
                   onClick={() => setInput(q)}
