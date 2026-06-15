@@ -11,7 +11,9 @@ import CurrencyForecast from './CurrencyForecast'
 import DebateCard from './DebateCard'
 import LensCard from './LensCard'
 import NewsCheckCard from './NewsCheckCard'
-import type { Briefing, CurrencyForecastData, DebateResult, LensResult, LensType, NewsArticle, NewsCheckResult } from '@/types'
+import ScenarioInput from './ScenarioInput'
+import ScenarioCard from './ScenarioCard'
+import type { Briefing, CurrencyForecastData, DebateResult, LensResult, LensType, NewsArticle, NewsCheckResult, ScenarioResult } from '@/types'
 import { format } from 'date-fns'
 
 interface BriefingCardProps {
@@ -66,6 +68,11 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
   const [newsLoading, setNewsLoading] = useState(false)
   const [newsError, setNewsError] = useState<string | null>(null)
 
+  const [showScenario, setShowScenario] = useState(false)
+  const [scenario, setScenario] = useState<ScenarioResult | null>(null)
+  const [scenarioHypothesis, setScenarioHypothesis] = useState('')
+  const [scenarioLoading, setScenarioLoading] = useState(false)
+
   async function handleDebate() {
     if (debateLoading) return
     setDebateLoading(true)
@@ -107,6 +114,26 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
       console.error('Lens failed')
     } finally {
       setLensLoading(false)
+    }
+  }
+
+  async function handleScenario(hypothesis: string) {
+    setScenarioLoading(true)
+    setScenario(null)
+    setScenarioHypothesis(hypothesis)
+    try {
+      const res = await fetch('/api/scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ countryCode: briefing.country_code, hypothesis, briefing }),
+      })
+      if (!res.ok) throw new Error('Scenario failed')
+      const data = (await res.json()) as { scenario: ScenarioResult }
+      setScenario(data.scenario)
+    } catch {
+      console.error('Scenario failed')
+    } finally {
+      setScenarioLoading(false)
     }
   }
 
@@ -169,7 +196,15 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
                 {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
               </Badge>
             )}
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setShowScenario((v) => !v); setScenario(null) }}
+                className={`h-7 text-xs border-gray-200 hover:border-amber-500 hover:text-amber-600 ${showScenario ? 'border-amber-400 text-amber-600 bg-amber-50' : 'text-gray-600'}`}
+              >
+                ⚡ What If?
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -268,6 +303,13 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
             {briefing.bottom_line}
           </p>
         </div>
+
+        {showScenario && (
+          <div className="space-y-3">
+            <ScenarioInput onRun={handleScenario} isLoading={scenarioLoading} />
+            {scenario && <ScenarioCard scenario={scenario} hypothesis={scenarioHypothesis} />}
+          </div>
+        )}
 
         {debate && <DebateCard debate={debate} />}
 

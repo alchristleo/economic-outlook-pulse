@@ -6,11 +6,9 @@ import { Loader2, Newspaper } from 'lucide-react'
 import CountrySelector from './components/CountrySelector'
 import BriefingCard from './components/BriefingCard'
 import ChatInterface from './components/ChatInterface'
-import ScenarioInput from './components/ScenarioInput'
-import ScenarioCard from './components/ScenarioCard'
 import { Button } from '@/components/ui/button'
 import { COUNTRIES } from '@/lib/worldbank'
-import type { Briefing, Country, WorldBankIndicator, CurrencyForecastData, ScenarioResult } from '@/types'
+import type { Briefing, Country, WorldBankIndicator, CurrencyForecastData } from '@/types'
 
 type AppState = 'idle' | 'loading' | 'ready'
 
@@ -20,35 +18,9 @@ export default function HomePage() {
   const [briefing, setBriefing] = useState<Briefing | null>(null)
   const [indicators, setIndicators] = useState<WorldBankIndicator[]>([])
   const [currencyForecast, setCurrencyForecast] = useState<CurrencyForecastData | null>(null)
-  const [scenario, setScenario] = useState<ScenarioResult | null>(null)
-  const [scenarioHypothesis, setScenarioHypothesis] = useState('')
-  const [scenarioLoading, setScenarioLoading] = useState(false)
-
-  async function handleScenario(hypothesis: string) {
-    if (!selectedCountry || !briefing) return
-    setScenarioLoading(true)
-    setScenario(null)
-    setScenarioHypothesis(hypothesis)
-    try {
-      const res = await fetch('/api/scenario', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ countryCode: selectedCountry.code, hypothesis, briefing }),
-      })
-      if (!res.ok) throw new Error('Scenario failed')
-      const data = (await res.json()) as { scenario: ScenarioResult }
-      setScenario(data.scenario)
-    } catch {
-      toast.error('Failed to run scenario. Please try again.')
-    } finally {
-      setScenarioLoading(false)
-    }
-  }
 
   async function handleGenerate() {
     if (!selectedCountry) return
-    setScenario(null)
-    setScenarioHypothesis('')
     setAppState('loading')
     setBriefing(null)
     setCurrencyForecast(null)
@@ -163,11 +135,7 @@ export default function HomePage() {
 
         {appState === 'ready' && briefing && (
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <div className="space-y-4">
-              <BriefingCard briefing={briefing} currencyForecast={currencyForecast} />
-              <ScenarioInput onRun={handleScenario} isLoading={scenarioLoading} />
-              {scenario && <ScenarioCard scenario={scenario} hypothesis={scenarioHypothesis} />}
-            </div>
+            <BriefingCard briefing={briefing} currencyForecast={currencyForecast} />
             <ChatInterface briefing={briefing} worldBankData={indicators} />
           </div>
         )}
