@@ -244,7 +244,7 @@ export default function HomePage() {
             <BriefingCard briefing={briefing} currencyForecast={currencyForecast} />
 
             {/* Right: AI Tools + Chat */}
-            <div className="space-y-4">
+            <div className="space-y-4 self-start sticky top-4">
               {/* AI Action Strip */}
               <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">

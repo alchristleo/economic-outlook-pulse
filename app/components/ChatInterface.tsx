@@ -78,7 +78,7 @@ export default function ChatInterface({
   }
 
   return (
-    <div className="flex h-full min-h-[500px] flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="flex max-h-[600px] min-h-[400px] flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">
           <Bot className="h-4 w-4 text-[#E3120B]" />
