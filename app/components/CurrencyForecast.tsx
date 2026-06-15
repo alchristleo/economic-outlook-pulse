@@ -134,6 +134,7 @@ export default function CurrencyForecast({ data }: Props) {
             stroke="none"
             legendType="none"
             name=""
+            tooltipType="none"
             connectNulls={false}
           />
           <Area
@@ -144,6 +145,7 @@ export default function CurrencyForecast({ data }: Props) {
             stroke="none"
             legendType="none"
             name=""
+            tooltipType="none"
             connectNulls={false}
           />
           <Line
