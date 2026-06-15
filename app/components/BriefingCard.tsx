@@ -1,13 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import { Loader2, AlertTriangle, TrendingUp, Eye } from 'lucide-react'
 import EconomicRadar from './EconomicRadar'
 import CurrencyForecast from './CurrencyForecast'
-import type { Briefing, CurrencyForecastData } from '@/types'
+import DebateCard from './DebateCard'
+import type { Briefing, CurrencyForecastData, DebateResult } from '@/types'
 import { format } from 'date-fns'
-import { AlertTriangle, TrendingUp, Eye } from 'lucide-react'
 
 interface BriefingCardProps {
   briefing: Briefing
@@ -42,6 +45,29 @@ function Section({
 }
 
 export default function BriefingCard({ briefing, currencyForecast }: BriefingCardProps) {
+  const [debate, setDebate] = useState<DebateResult | null>(null)
+  const [debateLoading, setDebateLoading] = useState(false)
+
+  async function handleDebate() {
+    if (debateLoading) return
+    setDebateLoading(true)
+    setDebate(null)
+    try {
+      const res = await fetch('/api/debate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ countryCode: briefing.country_code, briefing }),
+      })
+      if (!res.ok) throw new Error('Debate failed')
+      const data = (await res.json()) as { debate: DebateResult }
+      setDebate(data.debate)
+    } catch {
+      console.error('Debate failed')
+    } finally {
+      setDebateLoading(false)
+    }
+  }
+
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
       <div className="h-1 w-full bg-[#E3120B]" />
@@ -69,6 +95,19 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
                 {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
               </Badge>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDebate}
+              disabled={debateLoading}
+              className="h-7 text-xs border-gray-200 text-gray-600 hover:border-[#E3120B] hover:text-[#E3120B]"
+            >
+              {debateLoading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                '⚔ Bull vs Bear'
+              )}
+            </Button>
           </div>
         </div>
         <p className="text-base leading-relaxed text-gray-700">{briefing.executive_summary}</p>
@@ -115,6 +154,8 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
             {briefing.bottom_line}
           </p>
         </div>
+
+        {debate && <DebateCard debate={debate} />}
 
         <p className="text-right text-xs text-gray-400">
           Generated {format(new Date(briefing.generated_at), 'PPP p')}

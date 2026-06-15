@@ -90,3 +90,9 @@ export interface ScenarioRequest {
   hypothesis: string
   briefing: Briefing
 }
+
+export interface DebateResult {
+  bull_case: string[]  // exactly 3 arguments
+  bear_case: string[]  // exactly 3 arguments
+  verdict: string      // one sentence: who wins and why
+}
