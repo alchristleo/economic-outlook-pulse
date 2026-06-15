@@ -1,4 +1,4 @@
-import { createBriefingSystemPrompt, createBriefingUserPrompt, createChatSystemPrompt } from '@/lib/prompts'
+import { createBriefingSystemPrompt, createBriefingUserPrompt, createChatSystemPrompt, createCriticPrompt, createRevisionPrompt } from '@/lib/prompts'
 import type { WorldBankIndicator, Briefing, EconomicHealthScore } from '@/types'
 
 const mockIndicators: WorldBankIndicator[] = [
@@ -83,5 +83,57 @@ describe('createChatSystemPrompt', () => {
 
   it('includes what_to_watch', () => {
     expect(createChatSystemPrompt(mockBriefing, mockIndicators)).toContain('Bank Indonesia rates')
+  })
+})
+
+describe('createBriefingSystemPrompt (updated schema)', () => {
+  it('includes confidence field in JSON schema', () => {
+    expect(createBriefingSystemPrompt()).toContain('"confidence"')
+  })
+
+  it('explains high/medium/low confidence criteria', () => {
+    expect(createBriefingSystemPrompt()).toMatch(/high.*medium.*low/is)
+  })
+})
+
+describe('createCriticPrompt', () => {
+  it('includes the draft JSON in the prompt', () => {
+    const draft = '{"title":"Test","confidence":"high"}'
+    expect(createCriticPrompt(draft)).toContain(draft)
+  })
+
+  it('instructs exactly 3 weaknesses', () => {
+    expect(createCriticPrompt('{}')).toMatch(/exactly 3/i)
+  })
+
+  it('instructs JSON array response format', () => {
+    expect(createCriticPrompt('{}')).toContain('JSON array')
+  })
+
+  it('mentions Economist tone as a review criterion', () => {
+    expect(createCriticPrompt('{}')).toMatch(/economist/i)
+  })
+})
+
+describe('createRevisionPrompt', () => {
+  it('includes the draft JSON', () => {
+    const draft = '{"title":"Indonesia"}'
+    expect(createRevisionPrompt(draft, [])).toContain(draft)
+  })
+
+  it('includes all critique points', () => {
+    const critique = ['Too optimistic about growth', 'Missing FX risk', 'Tone lapse in paragraph 2']
+    const prompt = createRevisionPrompt('{}', critique)
+    expect(prompt).toContain('Too optimistic about growth')
+    expect(prompt).toContain('Missing FX risk')
+    expect(prompt).toContain('Tone lapse in paragraph 2')
+  })
+
+  it('instructs to maintain Economist voice', () => {
+    expect(createRevisionPrompt('{}', [])).toMatch(/economist/i)
+  })
+
+  it('instructs to return valid JSON', () => {
+    expect(createRevisionPrompt('{}', [])).toMatch(/valid JSON|return only the JSON/i)
   })
 })

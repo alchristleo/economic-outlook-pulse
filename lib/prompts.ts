@@ -13,8 +13,17 @@ Return exactly this shape:
   "risks": ["string — concise, specific, evidence-grounded"],
   "opportunities": ["string — concise, specific, evidence-grounded"],
   "what_to_watch": ["string — near-term catalyst or risk event"],
-  "bottom_line": "string — one sentence. Where is this country in its cycle and what follows?"
+  "bottom_line": "string — one sentence. Where is this country in its cycle and what follows?",
+  "confidence": "high | medium | low",
+  "data_quality_note": "string (omit this field entirely when confidence is high)"
 }
+
+Set "confidence" based on data quality:
+- "high": multiple fresh indicators (≤2 year lag), consistent and mutually reinforcing signals
+- "medium": some indicators missing or >2 years old, or signals point in conflicting directions
+- "low": significant data gaps, indicators >3 years old, or contradictory signals undermine conclusions
+
+Include "data_quality_note" (one sentence) when confidence is medium or low. Omit the field entirely when confidence is high.
 
 Style rules:
 - Never use "robust", "vibrant", "exciting", "amazing", or superlatives
@@ -110,4 +119,28 @@ ${indicatorBlock}
 - 2–4 sentences unless the question demands more
 - Never open with "Great question!" or filler
 - Use "is likely to" and "suggests" over definitive future claims`
+}
+
+export function createCriticPrompt(draftJson: string): string {
+  return `You are a rigorous economics editor reviewing an AI-generated briefing. Identify exactly 3 weaknesses. Focus on: unsupported claims, missing downside risks, Economist tone lapses, or outdated framing. Be specific and concise.
+
+Respond with a JSON array of exactly 3 strings. Do not include markdown fences or any text outside the JSON array:
+["weakness 1", "weakness 2", "weakness 3"]
+
+Briefing to review:
+${draftJson}`
+}
+
+export function createRevisionPrompt(draftJson: string, critique: string[]): string {
+  const critiqueBlock = critique.length > 0
+    ? critique.map((c, i) => `${i + 1}. ${c}`).join('\n')
+    : '(no specific critique — general quality pass)'
+
+  return `Revise this economic briefing to address the critique. Maintain The Economist's voice: concise, authoritative, dry. Return only the JSON object — no markdown, no preamble. Match the original schema exactly, including the confidence field.
+
+Original briefing:
+${draftJson}
+
+Critique:
+${critiqueBlock}`
 }
