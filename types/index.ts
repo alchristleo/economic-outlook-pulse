@@ -76,3 +76,17 @@ export interface CurrencyForecastData {
   regressionSlope: number  // LCU/month trend direction
   rSquared: number         // model fit quality 0–1
 }
+
+export interface ScenarioResult {
+  hypothesis_summary: string
+  chain_of_effects: string[]      // 3-4 ordered causal steps
+  revised_risks: string[]         // 2-3 risks under this scenario
+  revised_opportunities: string[] // 1-2 opportunities
+  bottom_line: string
+}
+
+export interface ScenarioRequest {
+  countryCode: string
+  hypothesis: string
+  briefing: Briefing
+}
