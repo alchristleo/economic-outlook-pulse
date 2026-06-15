@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { anthropic, MODEL } from '@/lib/anthropic'
+import { anthropic, MODEL_DRAFT, MODEL_FAST } from '@/lib/anthropic'
 import { fetchIndicators } from '@/lib/imf'
 import { fetchExchangeRate, COUNTRIES } from '@/lib/worldbank'
-import { createBriefingSystemPrompt, createBriefingUserPrompt } from '@/lib/prompts'
+import {
+  createBriefingSystemPrompt,
+  createBriefingUserPrompt,
+  createCriticPrompt,
+  createRevisionPrompt,
+} from '@/lib/prompts'
 import { computeHealthScore } from '@/lib/scoring'
-import type { GenerateBriefRequest, Briefing } from '@/types'
+import type { GenerateBriefRequest, Briefing, ConfidenceLevel } from '@/types'
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,10 +32,20 @@ export async function POST(req: NextRequest) {
     // Compute health score before calling Claude
     const healthScore = computeHealthScore(indicators)
 
-    const message = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1500,
-      system: createBriefingSystemPrompt(),
+    const systemPromptText = createBriefingSystemPrompt()
+
+    // Pass 1: Draft — extended thinking + prompt cache on static system prompt
+    const draftMessage = await anthropic.messages.create({
+      model: MODEL_DRAFT,
+      max_tokens: 10000,
+      thinking: { type: 'enabled', budget_tokens: 8000 },
+      system: [
+        {
+          type: 'text' as const,
+          text: systemPromptText,
+          cache_control: { type: 'ephemeral' as const },
+        },
+      ],
       messages: [
         {
           role: 'user',
@@ -39,7 +54,40 @@ export async function POST(req: NextRequest) {
       ],
     })
 
-    const rawText = message.content[0].type === 'text' ? message.content[0].text : ''
+    const draftText = draftMessage.content
+      .filter((block) => block.type === 'text')
+      .map((block) => (block.type === 'text' ? block.text : ''))
+      .join('')
+
+    // Pass 2: Critic — identify 3 weaknesses in the draft
+    const criticMessage = await anthropic.messages.create({
+      model: MODEL_FAST,
+      max_tokens: 500,
+      messages: [{ role: 'user', content: createCriticPrompt(draftText) }],
+    })
+
+    const criticText =
+      criticMessage.content[0]?.type === 'text' ? criticMessage.content[0].text : '[]'
+    let critique: string[] = []
+    try {
+      const parsed = JSON.parse(criticText)
+      if (Array.isArray(parsed)) critique = parsed.map(String)
+    } catch {
+      // critique stays [] — revision performs a general quality pass
+    }
+
+    // Pass 3: Revision — incorporate critique, produce final JSON
+    const finalMessage = await anthropic.messages.create({
+      model: MODEL_FAST,
+      max_tokens: 1500,
+      system: systemPromptText,
+      messages: [
+        { role: 'user', content: createRevisionPrompt(draftText, critique) },
+      ],
+    })
+
+    const rawText =
+      finalMessage.content[0]?.type === 'text' ? finalMessage.content[0].text : ''
 
     let parsedData: Record<string, unknown>
     try {
@@ -67,7 +115,15 @@ export async function POST(req: NextRequest) {
       data_year: latestYear,
       health_score: healthScore,
       exchange_rate: exchangeRate,
-      confidence: 'high',
+      confidence: (['high', 'medium', 'low'] as ConfidenceLevel[]).includes(
+        parsedData.confidence as ConfidenceLevel
+      )
+        ? (parsedData.confidence as ConfidenceLevel)
+        : 'medium',
+      data_quality_note:
+        typeof parsedData.data_quality_note === 'string' && parsedData.data_quality_note.length > 0
+          ? parsedData.data_quality_note
+          : undefined,
     }
 
     return NextResponse.json({ briefing, indicators })
