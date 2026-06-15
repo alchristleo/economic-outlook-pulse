@@ -61,6 +61,7 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
 
   const [activeLens, setActiveLens] = useState<LensType | 'standard'>('standard')
   const [lensLoading, setLensLoading] = useState(false)
+  const [currentLensResult, setCurrentLensResult] = useState<LensResult | undefined>(undefined)
   const lensCache = useRef<Map<string, LensResult>>(new Map())
 
   const [newsResult, setNewsResult] = useState<NewsCheckResult | null>(null)
@@ -95,11 +96,19 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
 
   async function handleLensChange(lens: LensType | 'standard') {
     setActiveLens(lens)
-    if (lens === 'standard') return
+    if (lens === 'standard') {
+      setCurrentLensResult(undefined)
+      return
+    }
 
     const cacheKey = `${briefing.country_code}:${lens}`
-    if (lensCache.current.has(cacheKey)) return
+    const cached = lensCache.current.get(cacheKey)
+    if (cached) {
+      setCurrentLensResult(cached)
+      return
+    }
 
+    setCurrentLensResult(undefined)
     setLensLoading(true)
     try {
       const res = await fetch('/api/lens', {
@@ -110,6 +119,7 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
       if (!res.ok) throw new Error('Lens failed')
       const data = (await res.json()) as { result: LensResult }
       lensCache.current.set(cacheKey, data.result)
+      setCurrentLensResult(data.result)
     } catch {
       console.error('Lens failed')
     } finally {
@@ -164,10 +174,6 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
     }
   }
 
-  const currentLensResult =
-    activeLens !== 'standard'
-      ? lensCache.current.get(`${briefing.country_code}:${activeLens}`)
-      : undefined
 
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
@@ -233,7 +239,6 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
             <button
               key={tab.id}
               onClick={() => handleLensChange(tab.id)}
-              disabled={lensLoading}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 activeLens === tab.id
                   ? 'bg-white text-gray-900 shadow-sm'
