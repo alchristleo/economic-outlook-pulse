@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     let scenario: ScenarioResult
     try {
       scenario = parseJsonResponse(rawText) as ScenarioResult
-    } catch {
+    } catch (parseErr) {
+      console.error('[scenario] parse failed, raw:', rawText.slice(0, 300), parseErr)
       return NextResponse.json({ error: 'Failed to parse scenario JSON' }, { status: 500 })
     }
 

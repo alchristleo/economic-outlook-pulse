@@ -11,8 +11,16 @@ export const anthropic = new Anthropic({
 export const MODEL = 'claude-sonnet-4-6'
 
 export function parseJsonResponse(raw: string): unknown {
-  const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
-  return JSON.parse(cleaned)
+  const text = raw.trim()
+  // 1. Try direct parse
+  try { return JSON.parse(text) } catch { /* continue */ }
+  // 2. Strip markdown fences
+  const stripped = text.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+  try { return JSON.parse(stripped) } catch { /* continue */ }
+  // 3. Extract first JSON object or array from anywhere in the string
+  const match = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
+  if (match) return JSON.parse(match[1])
+  throw new Error(`Cannot parse JSON from model response: ${text.slice(0, 120)}`)
 }
 
 export function streamToReadableStream(
