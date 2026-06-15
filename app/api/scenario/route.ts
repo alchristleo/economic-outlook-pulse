@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { anthropic, MODEL } from '@/lib/anthropic'
+import { anthropic, MODEL, parseJsonResponse } from '@/lib/anthropic'
 import { COUNTRIES } from '@/lib/worldbank'
 import { fetchIndicators } from '@/lib/imf'
 import { createScenarioSystemPrompt, createScenarioUserPrompt } from '@/lib/prompts'
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     let scenario: ScenarioResult
     try {
-      scenario = JSON.parse(rawText) as ScenarioResult
+      scenario = parseJsonResponse(rawText) as ScenarioResult
     } catch {
       return NextResponse.json({ error: 'Failed to parse scenario JSON' }, { status: 500 })
     }

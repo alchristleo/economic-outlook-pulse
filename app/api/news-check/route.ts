@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { anthropic, MODEL } from '@/lib/anthropic'
+import { anthropic, MODEL, parseJsonResponse } from '@/lib/anthropic'
 import { COUNTRIES } from '@/lib/worldbank'
 import { createNewsCheckSystemPrompt, createNewsCheckUserPrompt } from '@/lib/prompts'
 import type { Briefing, NewsArticle, NewsCheckResult } from '@/types'
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     })
 
     const raw = message.content.find((b) => b.type === 'text')?.text ?? ''
-    const result = JSON.parse(raw) as NewsCheckResult
+    const result = parseJsonResponse(raw) as NewsCheckResult
 
     return new Response(JSON.stringify({ result, articles }), {
       headers: { 'Content-Type': 'application/json' },

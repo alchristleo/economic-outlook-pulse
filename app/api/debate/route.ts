@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { anthropic, MODEL } from '@/lib/anthropic'
+import { anthropic, MODEL, parseJsonResponse } from '@/lib/anthropic'
 import { COUNTRIES } from '@/lib/worldbank'
 import { fetchIndicators } from '@/lib/imf'
 import { createDebateSystemPrompt, createDebateUserPrompt } from '@/lib/prompts'
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     let debate: DebateResult
     try {
-      debate = JSON.parse(rawText) as DebateResult
+      debate = parseJsonResponse(rawText) as DebateResult
     } catch {
       return NextResponse.json({ error: 'Failed to parse debate JSON' }, { status: 500 })
     }

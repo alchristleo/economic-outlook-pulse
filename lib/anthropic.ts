@@ -10,6 +10,11 @@ export const anthropic = new Anthropic({
 
 export const MODEL = 'claude-sonnet-4-6'
 
+export function parseJsonResponse(raw: string): unknown {
+  const cleaned = raw.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
+  return JSON.parse(cleaned)
+}
+
 export function streamToReadableStream(
   stream: ReturnType<typeof anthropic.messages.stream>
 ): ReadableStream<Uint8Array> {

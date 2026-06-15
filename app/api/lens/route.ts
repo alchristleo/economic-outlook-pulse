@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { anthropic, MODEL } from '@/lib/anthropic'
+import { anthropic, MODEL, parseJsonResponse } from '@/lib/anthropic'
 import { COUNTRIES } from '@/lib/worldbank'
 import { fetchIndicators } from '@/lib/imf'
 import { createLensSystemPrompt, createLensUserPrompt } from '@/lib/prompts'
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     })
 
     const raw = message.content.find((b) => b.type === 'text')?.text ?? ''
-    const result = JSON.parse(raw) as LensResult
+    const result = parseJsonResponse(raw) as LensResult
 
     return new Response(JSON.stringify({ result }), {
       headers: { 'Content-Type': 'application/json' },
