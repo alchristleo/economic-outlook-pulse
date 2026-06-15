@@ -33,6 +33,7 @@ const mockBriefing: Briefing = {
   data_year: 2023,
   health_score: mockHealthScore,
   exchange_rate: { currency: 'IDR', rate: 15800 },
+  confidence: 'high',
 }
 
 describe('createBriefingSystemPrompt', () => {

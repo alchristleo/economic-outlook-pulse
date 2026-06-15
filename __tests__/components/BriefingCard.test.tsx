@@ -36,6 +36,7 @@ const mockBriefing: Briefing = {
     ],
   },
   exchange_rate: { currency: 'IDR', rate: 15800 },
+  confidence: 'high',
 }
 
 describe('BriefingCard', () => {

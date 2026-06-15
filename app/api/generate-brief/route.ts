@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       data_year: latestYear,
       health_score: healthScore,
       exchange_rate: exchangeRate,
+      confidence: 'high',
     }
 
     return NextResponse.json({ briefing, indicators })

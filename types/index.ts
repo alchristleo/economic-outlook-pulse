@@ -21,6 +21,8 @@ export interface EconomicHealthScore {
   dimensions: DimensionScore[]
 }
 
+export type ConfidenceLevel = 'high' | 'medium' | 'low'
+
 export interface Briefing {
   title: string
   executive_summary: string
@@ -35,6 +37,8 @@ export interface Briefing {
   data_year: number | null
   health_score: EconomicHealthScore
   exchange_rate: { currency: string; rate: number } | null
+  confidence: ConfidenceLevel
+  data_quality_note?: string
 }
 
 export interface Message {
