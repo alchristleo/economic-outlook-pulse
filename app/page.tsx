@@ -8,7 +8,7 @@ import BriefingCard from './components/BriefingCard'
 import ChatInterface from './components/ChatInterface'
 import { Button } from '@/components/ui/button'
 import { COUNTRIES } from '@/lib/worldbank'
-import type { Briefing, Country, WorldBankIndicator } from '@/types'
+import type { Briefing, Country, WorldBankIndicator, CurrencyForecastData } from '@/types'
 
 type AppState = 'idle' | 'loading' | 'ready'
 
@@ -17,26 +17,40 @@ export default function HomePage() {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
   const [briefing, setBriefing] = useState<Briefing | null>(null)
   const [indicators, setIndicators] = useState<WorldBankIndicator[]>([])
+  const [currencyForecast, setCurrencyForecast] = useState<CurrencyForecastData | null>(null)
 
   async function handleGenerate() {
     if (!selectedCountry) return
     setAppState('loading')
     setBriefing(null)
+    setCurrencyForecast(null)
 
     try {
-      const res = await fetch('/api/generate-brief', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          countryCode: selectedCountry.code,
+      const [briefRes, forecastRes] = await Promise.all([
+        fetch('/api/generate-brief', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ countryCode: selectedCountry.code }),
         }),
-      })
+        fetch('/api/currency-forecast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ countryCode: selectedCountry.code }),
+        }),
+      ])
 
-      if (!res.ok) throw new Error('Failed to generate briefing')
+      if (!briefRes.ok) throw new Error('Failed to generate briefing')
 
-      const data = (await res.json()) as { briefing: Briefing; indicators: WorldBankIndicator[] }
+      const data = (await briefRes.json()) as { briefing: Briefing; indicators: WorldBankIndicator[] }
       setBriefing(data.briefing)
       setIndicators(data.indicators)
+
+      if (forecastRes.ok) {
+        const fData = (await forecastRes.json()) as { forecast: CurrencyForecastData }
+        setCurrencyForecast(fData.forecast)
+      }
+      // forecast failure is non-fatal — BriefingCard handles null gracefully
+
       setAppState('ready')
     } catch {
       toast.error('Failed to generate briefing. Please try again.')
@@ -121,7 +135,7 @@ export default function HomePage() {
 
         {appState === 'ready' && briefing && (
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <BriefingCard briefing={briefing} />
+            <BriefingCard briefing={briefing} currencyForecast={currencyForecast} />
             <ChatInterface briefing={briefing} worldBankData={indicators} />
           </div>
         )}

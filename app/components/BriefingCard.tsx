@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import EconomicRadar from './EconomicRadar'
-import type { Briefing } from '@/types'
+import CurrencyForecast from './CurrencyForecast'
+import type { Briefing, CurrencyForecastData } from '@/types'
 import { format } from 'date-fns'
 import { AlertTriangle, TrendingUp, Eye } from 'lucide-react'
 
 interface BriefingCardProps {
   briefing: Briefing
+  currencyForecast?: CurrencyForecastData | null
 }
 
 function Section({
@@ -39,7 +41,7 @@ function Section({
   )
 }
 
-export default function BriefingCard({ briefing }: BriefingCardProps) {
+export default function BriefingCard({ briefing, currencyForecast }: BriefingCardProps) {
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
       <div className="h-1 w-full bg-[#E3120B]" />
@@ -77,6 +79,13 @@ export default function BriefingCard({ briefing }: BriefingCardProps) {
         <EconomicRadar healthScore={briefing.health_score} />
 
         <Separator />
+
+        {currencyForecast && (
+          <>
+            <CurrencyForecast data={currencyForecast} />
+            <Separator />
+          </>
+        )}
 
         <div className="grid gap-6 md:grid-cols-3">
           <Section
