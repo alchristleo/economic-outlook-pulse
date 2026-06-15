@@ -1,7 +1,7 @@
 # Claude.md — The Pulse Project
 
 **Project**: The Pulse — AI-Powered Economist-Style Briefing Generator + Conversational Analyst + AI Superpowers Suite  
-**Purpose**: Rapid full-stack prototype for The Economist interview (AI Lab / digital product / engineering roles). Demonstrates strong product sense, LLM orchestration, data grounding, tone control, and clean full-stack execution.  
+**Purpose**: Full-stack AI prototype demonstrating product sense, LLM orchestration, data grounding, tone control, and clean engineering.  
 **Tone for this project**: Professional, precise, insightful, with subtle dry wit where appropriate — exactly like The Economist itself.
 
 ---
@@ -211,7 +211,7 @@ Prompts: Clear function names like createBriefingSystemPrompt(country, data)
 
 10. Interview Talking Points (Built Into the Code)
 
-Add a small footer or info modal: “Prototype built for The Economist interview — demonstrates AI Lab-style experimentation with grounded analysis and conversational depth.”
+Footer shows data sources: IMF WEO, open.er-api.com, GDELT.
 In code comments and README, note key decisions that show product thinking.
 
 

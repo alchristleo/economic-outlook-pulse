@@ -341,9 +341,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="mt-16 border-t border-gray-200 py-6">
         <div className="mx-auto max-w-6xl px-4 text-center text-xs text-gray-400">
-          Prototype built for The Economist interview — demonstrates AI Lab-style experimentation
-          with grounded analysis and conversational depth. Data: IMF World Economic Outlook.
-          Not affiliated with The Economist Group.
+          Data: IMF World Economic Outlook · Exchange rates: open.er-api.com · News: GDELT Project
         </div>
       </footer>
     </main>

@@ -197,4 +197,4 @@ Set `ANTHROPIC_API_KEY` in Vercel environment variables. All other data sources 
 
 ---
 
-*Prototype built for The Economist interview — demonstrates AI Lab-style experimentation with grounded analysis and conversational depth. Not affiliated with The Economist Group.*
+*Prototype · Data: IMF World Economic Outlook · Exchange rates: open.er-api.com · News: GDELT Project*

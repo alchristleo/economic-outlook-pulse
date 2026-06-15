@@ -6,6 +6,24 @@ import type { Briefing, NewsArticle, NewsCheckResult } from '@/types'
 
 export const maxDuration = 30
 
+async function fetchGdelt(query: string, attempt = 0): Promise<NewsArticle[]> {
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=10&format=json&timespan=30d`
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+
+  if (res.status === 429 && attempt === 0) {
+    await new Promise((r) => setTimeout(r, 6000))
+    return fetchGdelt(query, 1)
+  }
+
+  if (!res.ok) return []
+
+  const data = (await res.json()) as { articles?: Array<{ title: string; url: string }> }
+  return (data.articles ?? [])
+    .filter((a) => a.title && a.url)
+    .slice(0, 10)
+    .map((a) => ({ title: a.title, url: a.url }))
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as { countryCode: string; briefing: Briefing }
@@ -19,30 +37,18 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Fetch GDELT headlines — titles only, no full content
-    const gdeltUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(country.name)}&mode=artlist&maxrecords=10&format=json&timespan=7d`
     let articles: NewsArticle[] = []
-
     try {
-      const gdeltRes = await fetch(gdeltUrl, { signal: AbortSignal.timeout(8000) })
-      if (gdeltRes.ok) {
-        const gdeltData = (await gdeltRes.json()) as {
-          articles?: Array<{ title: string; url: string }>
-        }
-        articles = (gdeltData.articles ?? [])
-          .filter((a) => a.title && a.url)
-          .slice(0, 10)
-          .map((a) => ({ title: a.title, url: a.url }))
-      }
+      articles = await fetchGdelt(country.name)
     } catch {
-      // GDELT timeout or error — fall through to 400
+      // timeout or network error
     }
 
     if (articles.length === 0) {
-      return new Response(JSON.stringify({ error: 'No recent news available' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ error: 'No recent news available for this country via GDELT' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
     const headlines = articles.map((a) => a.title)
