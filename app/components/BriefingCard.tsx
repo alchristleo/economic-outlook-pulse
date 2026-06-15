@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import EconomicRadar from './EconomicRadar'
 import CurrencyForecast from './CurrencyForecast'
-import type { Briefing, CurrencyForecastData } from '@/types'
+import type { Briefing, CurrencyForecastData, ConfidenceLevel } from '@/types'
 import { format } from 'date-fns'
 import { AlertTriangle, TrendingUp, Eye } from 'lucide-react'
 
-const CONFIDENCE_CONFIG: Record<'high' | 'medium' | 'low', { label: string; className: string }> = {
+const CONFIDENCE_CONFIG: Record<ConfidenceLevel, { label: string; className: string }> = {
   high: {
     label: 'High confidence',
     className: 'border-green-200 bg-green-50 text-green-700',

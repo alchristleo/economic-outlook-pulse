@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
     // Pass 1: Draft — extended thinking + prompt cache on static system prompt
     const draftMessage = await anthropic.messages.create({
       model: MODEL_DRAFT,
-      max_tokens: 10000,
-      thinking: { type: 'enabled', budget_tokens: 8000 },
+      max_tokens: 6000,
+      thinking: { type: 'enabled', budget_tokens: 4000 },
       system: [
         {
           type: 'text' as const,
@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
     const criticMessage = await anthropic.messages.create({
       model: MODEL_FAST,
       max_tokens: 500,
+      system: systemPromptText,
       messages: [{ role: 'user', content: createCriticPrompt(draftText) }],
     })
 
