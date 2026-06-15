@@ -43,7 +43,7 @@
 ## 3. Actual Project Structure (as built)
 the-pulse/
 ├── app/
-│   ├── page.tsx                      # Main UI: selector → briefing → scenario → chat
+│   ├── page.tsx                      # Main UI: left=BriefingCard, right=AI tools strip + chat
 │   ├── layout.tsx
 │   ├── globals.css
 │   ├── api/
@@ -55,7 +55,7 @@ the-pulse/
 │   │   ├── news-check/route.ts       # GDELT headlines → Claude corroboration/contradiction
 │   │   └── scenario/route.ts         # What-if hypothesis → causal chain analysis
 │   └── components/
-│       ├── BriefingCard.tsx          # Main briefing display + lens control + action buttons
+│       ├── BriefingCard.tsx          # Main briefing display + full-width lens tabs (bond/equity/central_bank)
 │       ├── ChatInterface.tsx         # Chat with ComparisonCard for multi-country tool use
 │       ├── ComparisonCard.tsx        # Side-by-side indicator table with diff pills
 │       ├── CountrySelector.tsx       # Allowlisted country dropdown
@@ -68,7 +68,7 @@ the-pulse/
 │       ├── ScenarioInput.tsx         # Hypothesis text input + example pills
 │       └── ui/ (shadcn)
 ├── lib/
-│   ├── anthropic.ts                  # Claude client singleton + streamToReadableStream
+│   ├── anthropic.ts                  # Claude client singleton + streamToReadableStream + parseJsonResponse
 │   ├── imf.ts                        # IMF WEO DataMapper fetching, 5-minute TTL cache, ISO2→ISO3
 │   ├── prompts.ts                    # All prompts: briefing, chat, scenario, debate, lens, news
 │   ├── scoring.ts                    # 5-dimension Dalio-inspired health score (0–100 composite)
@@ -153,10 +153,10 @@ All prompts live in lib/prompts.ts. Never hardcode long prompts inside route han
 
 Visual Identity: Clean, modern, premium. Heavy use of white space. Economist red (#E3120B or #C8102E) as primary accent.
 Typography: System sans-serif for UI, consider a refined serif for headings if it feels right (but keep simple).
-Layout:
-Top: Selector + Generate button
-Main: Beautiful briefing card/report
-Below or sidebar: Chat interface (feels like a “live correspondent”)
+Layout (as built):
+- Top bar: country selector + Generate Brief button
+- 2-column grid (lg): left = BriefingCard (full briefing, radar, forecast, lens tabs); right = AI tools strip (What If / Bull vs Bear / vs News) + sticky chat panel (max-h 600px, overflow-y-auto)
+- Right column: `self-start sticky top-4` — stays in view while scrolling the briefing
 
 States: Empty → Generating → Result + Chat
 Accessibility: Proper labels, keyboard navigation, sufficient contrast.
@@ -174,7 +174,7 @@ Never use generic AI gradients, purple/pink accents, or “futuristic” sci-fi 
 
 **Exchange rates (`lib/worldbank.ts`)** — open.er-api.com (free, no key)
 
-**GDELT news (`/api/news-check`)** — free, no key, `timespan=7d`, max 10 articles, titles only passed to Claude. 8-second timeout. 400 on zero results.
+**GDELT news (`/api/news-check`)** — free, no key, `timespan=30d`, max 10 articles, titles only passed to Claude. 8-second timeout, 1 retry after 6s on 429. 400 on zero results.
 
 Always surface the data year clearly in the UI (IMF WEO · {year} badge).
 
@@ -223,7 +223,6 @@ Propose the smallest effective change that maintains quality.
 Write clean, typed, well-commented code.
 Update claude.md only if a major architectural decision changes.
 After changes, suggest the next logical step for the demo.
-Always consider the interview audience — make the app feel thoughtful and high-signal.
 
 Never:
 
@@ -270,3 +269,12 @@ Module-level `Map` cache persists between Jest test cases when they share the sa
 
 ### IndicatorChart + BriefingCard year selector conflict
 Do not render the indicator year inside `IndicatorChart` tiles. `BriefingCard` already shows it in its badge. Duplicate year text causes `getByText(/2023/)` to throw "found multiple elements" in both test suites.
+
+### Claude returns markdown-fenced JSON
+All routes that call Claude for structured JSON must use `parseJsonResponse(raw)` from `lib/anthropic.ts` — never `JSON.parse(raw)` directly. Claude occasionally wraps output in ` ```json\n...\n``` ` blocks despite explicit instructions. `parseJsonResponse` has three fallbacks: direct parse → strip fence → regex-extract first `{...}` block.
+
+### shadcn ScrollArea breaks in flex containers
+`ScrollArea` wraps content in extra divs that break `flex-1 min-h-0` scroll behaviour. Use a plain `<div className="flex-1 min-h-0 overflow-y-auto">` instead for any scrollable flex child.
+
+### GDELT rate-limiting (429)
+GDELT enforces 1 req/5s per IP. The `news-check` route retries once after 6s on 429. In shared/WSL environments the IP may already be rate-limited — `timespan=30d` (vs 7d) increases article hit rate to compensate.
