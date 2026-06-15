@@ -45,6 +45,18 @@ export interface Briefing {
 export interface Message {
   role: 'user' | 'assistant'
   content: string
+  comparisonData?: ComparisonData
+}
+
+export interface ComparisonCountry {
+  code: string
+  name: string
+  indicators: WorldBankIndicator[]
+}
+
+export interface ComparisonData {
+  base_country_code: string
+  countries: ComparisonCountry[]  // 1–3 comparison countries
 }
 
 export interface ChatRequest {
