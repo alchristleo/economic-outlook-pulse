@@ -96,3 +96,25 @@ export interface DebateResult {
   bear_case: string[]  // exactly 3 arguments
   verdict: string      // one sentence: who wins and why
 }
+
+export type LensType = 'bond' | 'equity' | 'central_bank'
+
+export interface LensResult {
+  lens: LensType
+  headline: string     // one sentence framing
+  signals: string[]    // 3-4 lens-specific observations
+  key_risk: string     // biggest risk for this investor type
+  bottom_line: string  // one sentence verdict
+}
+
+export interface NewsArticle {
+  title: string
+  url: string
+}
+
+export interface NewsCheckResult {
+  articles_used: number
+  corroborations: string[]  // 2-3
+  contradictions: string[]  // 1-2
+  overall: string           // one sentence synthesis
+}

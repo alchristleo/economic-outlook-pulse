@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -9,13 +9,22 @@ import { Loader2, AlertTriangle, TrendingUp, Eye } from 'lucide-react'
 import EconomicRadar from './EconomicRadar'
 import CurrencyForecast from './CurrencyForecast'
 import DebateCard from './DebateCard'
-import type { Briefing, CurrencyForecastData, DebateResult } from '@/types'
+import LensCard from './LensCard'
+import NewsCheckCard from './NewsCheckCard'
+import type { Briefing, CurrencyForecastData, DebateResult, LensResult, LensType, NewsArticle, NewsCheckResult } from '@/types'
 import { format } from 'date-fns'
 
 interface BriefingCardProps {
   briefing: Briefing
   currencyForecast?: CurrencyForecastData | null
 }
+
+const LENS_TABS: { id: LensType | 'standard'; label: string }[] = [
+  { id: 'standard', label: 'Standard' },
+  { id: 'bond', label: 'Bond' },
+  { id: 'equity', label: 'Equity' },
+  { id: 'central_bank', label: 'Central Bank' },
+]
 
 function Section({
   icon,
@@ -48,6 +57,15 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
   const [debate, setDebate] = useState<DebateResult | null>(null)
   const [debateLoading, setDebateLoading] = useState(false)
 
+  const [activeLens, setActiveLens] = useState<LensType | 'standard'>('standard')
+  const [lensLoading, setLensLoading] = useState(false)
+  const lensCache = useRef<Map<string, LensResult>>(new Map())
+
+  const [newsResult, setNewsResult] = useState<NewsCheckResult | null>(null)
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
+  const [newsLoading, setNewsLoading] = useState(false)
+  const [newsError, setNewsError] = useState<string | null>(null)
+
   async function handleDebate() {
     if (debateLoading) return
     setDebateLoading(true)
@@ -67,6 +85,62 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
       setDebateLoading(false)
     }
   }
+
+  async function handleLensChange(lens: LensType | 'standard') {
+    setActiveLens(lens)
+    if (lens === 'standard') return
+
+    const cacheKey = `${briefing.country_code}:${lens}`
+    if (lensCache.current.has(cacheKey)) return
+
+    setLensLoading(true)
+    try {
+      const res = await fetch('/api/lens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ countryCode: briefing.country_code, lens, briefing }),
+      })
+      if (!res.ok) throw new Error('Lens failed')
+      const data = (await res.json()) as { result: LensResult }
+      lensCache.current.set(cacheKey, data.result)
+    } catch {
+      console.error('Lens failed')
+    } finally {
+      setLensLoading(false)
+    }
+  }
+
+  async function handleNewsCheck() {
+    if (newsLoading) return
+    setNewsLoading(true)
+    setNewsResult(null)
+    setNewsArticles([])
+    setNewsError(null)
+    try {
+      const res = await fetch('/api/news-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ countryCode: briefing.country_code, briefing }),
+      })
+      if (!res.ok) {
+        const err = (await res.json()) as { error: string }
+        setNewsError(err.error ?? 'News check failed')
+        return
+      }
+      const data = (await res.json()) as { result: NewsCheckResult; articles: NewsArticle[] }
+      setNewsResult(data.result)
+      setNewsArticles(data.articles)
+    } catch {
+      setNewsError('News check failed')
+    } finally {
+      setNewsLoading(false)
+    }
+  }
+
+  const currentLensResult =
+    activeLens !== 'standard'
+      ? lensCache.current.get(`${briefing.country_code}:${activeLens}`)
+      : undefined
 
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
@@ -95,22 +169,62 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
                 {briefing.exchange_rate.currency}/USD · {briefing.exchange_rate.rate.toLocaleString()}
               </Badge>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDebate}
-              disabled={debateLoading}
-              className="h-7 text-xs border-gray-200 text-gray-600 hover:border-[#E3120B] hover:text-[#E3120B]"
-            >
-              {debateLoading ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                '⚔ Bull vs Bear'
-              )}
-            </Button>
+            <div className="flex gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDebate}
+                disabled={debateLoading}
+                className="h-7 text-xs border-gray-200 text-gray-600 hover:border-[#E3120B] hover:text-[#E3120B]"
+              >
+                {debateLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : '⚔ Bull vs Bear'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNewsCheck}
+                disabled={newsLoading}
+                className="h-7 text-xs border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600"
+              >
+                {newsLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : '📰 vs. News'}
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Investor Lens segmented control */}
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+          {LENS_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleLensChange(tab.id)}
+              disabled={lensLoading}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                activeLens === tab.id
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <p className="text-base leading-relaxed text-gray-700">{briefing.executive_summary}</p>
+
+        {/* Lens result below executive summary */}
+        {activeLens !== 'standard' && (
+          <div>
+            {lensLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analysing through {LENS_TABS.find((t) => t.id === activeLens)?.label} lens…
+              </div>
+            ) : currentLensResult ? (
+              <LensCard result={currentLensResult} />
+            ) : null}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -156,6 +270,11 @@ export default function BriefingCard({ briefing, currencyForecast }: BriefingCar
         </div>
 
         {debate && <DebateCard debate={debate} />}
+
+        {newsError && (
+          <p className="text-xs text-amber-600 bg-amber-50 rounded px-3 py-2">{newsError}</p>
+        )}
+        {newsResult && <NewsCheckCard result={newsResult} articles={newsArticles} />}
 
         <p className="text-right text-xs text-gray-400">
           Generated {format(new Date(briefing.generated_at), 'PPP p')}
