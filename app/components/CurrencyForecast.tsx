@@ -109,6 +109,7 @@ export default function CurrencyForecast({ data }: Props) {
             tickLine={false}
             axisLine={false}
             width={60}
+            domain={['auto', 'auto']}
           />
           <Tooltip
             formatter={(value, name) => [typeof value === 'number' ? formatRate(value) : String(value ?? ''), String(name ?? '')]}
