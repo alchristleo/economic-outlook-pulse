@@ -1,6 +1,6 @@
 # Claude.md — The Pulse Project
 
-**Project**: The Pulse — AI-Powered Economist-Style Briefing Generator + Conversational Analyst  
+**Project**: The Pulse — AI-Powered Economist-Style Briefing Generator + Conversational Analyst + AI Superpowers Suite  
 **Purpose**: Rapid full-stack prototype for The Economist interview (AI Lab / digital product / engineering roles). Demonstrates strong product sense, LLM orchestration, data grounding, tone control, and clean full-stack execution.  
 **Tone for this project**: Professional, precise, insightful, with subtle dry wit where appropriate — exactly like The Economist itself.
 
@@ -12,7 +12,7 @@
 - **Core Value**: Help users quickly get rigorous, data-backed global analysis in The Economist’s distinctive voice, then explore implications through natural conversation.
 - **Key Constraints**:
   - Must feel premium and on-brand (never generic AI slop).
-  - Ground analysis in real public data where possible (World Bank).
+  - Ground analysis in real public data where possible (IMF WEO — switched from World Bank for recency).
   - Clearly label as a **prototype** / demo (not official Economist content).
   - Prioritize speed of iteration + high visual/UX quality over perfect production readiness.
   - No scraping or using The Economist’s copyrighted content.
@@ -27,7 +27,7 @@
 - **Styling**: Tailwind CSS + shadcn/ui (use existing components heavily: Card, Button, Select, Dialog, Tabs, etc.)
 - **Charts**: Recharts (preferred) or Chart.js
 - **LLM**: Anthropic Claude (`claude-sonnet-4-6`) via `@anthropic-ai/sdk`
-- **Data**: World Bank Indicators API (public, no key) + REST Countries (optional)
+- **Data**: IMF World Economic Outlook DataMapper API (public, no key) — replaced World Bank for recency. Exchange rates: open.er-api.com. News: GDELT API (public, no key)
 - **State**: React hooks + `useState`/`useEffect`. TanStack Query only if chat history grows complex.
 - **Deployment target**: Vercel (free tier is perfect)
 - **Key libraries to prefer**:
@@ -40,31 +40,46 @@
 
 ---
 
-## 3. Recommended Project Structure
+## 3. Actual Project Structure (as built)
 the-pulse/
 ├── app/
-│   ├── (main)/
-│   │   ├── page.tsx                 # Landing + main interface
-│   │   ├── layout.tsx
-│   │   └── globals.css
+│   ├── page.tsx                      # Main UI: selector → briefing → scenario → chat
+│   ├── layout.tsx
+│   ├── globals.css
 │   ├── api/
-│   │   ├── generate-brief/
-│   │   │   └── route.ts
-│   │   └── chat/
-│   │       └── route.ts
+│   │   ├── generate-brief/route.ts   # IMF fetch → scoring → Claude briefing JSON
+│   │   ├── chat/route.ts             # Agentic tool-use loop (fetch_country_indicators)
+│   │   ├── currency-forecast/route.ts# Linear regression on 24-mo IMF data + CI band
+│   │   ├── debate/route.ts           # Bull vs Bear — 3 args each side + verdict
+│   │   ├── lens/route.ts             # Investor Lens — bond/equity/central_bank reframe
+│   │   ├── news-check/route.ts       # GDELT headlines → Claude corroboration/contradiction
+│   │   └── scenario/route.ts         # What-if hypothesis → causal chain analysis
 │   └── components/
-│       ├── BriefingCard.tsx
-│       ├── ChatInterface.tsx
-│       ├── CountrySelector.tsx
-│       ├── IndicatorChart.tsx
+│       ├── BriefingCard.tsx          # Main briefing display + lens control + action buttons
+│       ├── ChatInterface.tsx         # Chat with ComparisonCard for multi-country tool use
+│       ├── ComparisonCard.tsx        # Side-by-side indicator table with diff pills
+│       ├── CountrySelector.tsx       # Allowlisted country dropdown
+│       ├── CurrencyForecast.tsx      # Recharts ComposedChart: historical + forecast + CI
+│       ├── DebateCard.tsx            # Two-column bull/bear + verdict strip
+│       ├── EconomicRadar.tsx         # Recharts RadarChart + dimension breakdown table
+│       ├── LensCard.tsx              # Coloured left-border investor perspective card
+│       ├── NewsCheckCard.tsx         # GDELT reconciliation: ✓ green / ⚠ amber + article list
+│       ├── ScenarioCard.tsx          # Numbered causal chain + risks/opportunities grid
+│       ├── ScenarioInput.tsx         # Hypothesis text input + example pills
 │       └── ui/ (shadcn)
 ├── lib/
-│   ├── anthropic.ts                 # Reusable client + helpers
-│   ├── worldbank.ts                 # Data fetching + caching helpers
-│   ├── prompts.ts                   # All system prompts + few-shot examples
-│   └── utils.ts
+│   ├── anthropic.ts                  # Claude client singleton + streamToReadableStream
+│   ├── imf.ts                        # IMF WEO DataMapper fetching, 5-minute TTL cache, ISO2→ISO3
+│   ├── prompts.ts                    # All prompts: briefing, chat, scenario, debate, lens, news
+│   ├── scoring.ts                    # 5-dimension Dalio-inspired health score (0–100 composite)
+│   └── worldbank.ts                  # Country list, currency metadata, exchange rate, value fmt
 ├── types/
-│   └── index.ts                     # Briefing, Message, etc. interfaces
+│   └── index.ts                      # All interfaces: Briefing, Message, ScenarioResult,
+│                                     #   DebateResult, LensType/Result, NewsArticle/CheckResult,
+│                                     #   CurrencyForecastData, EconomicHealthScore, etc.
+├── docs/superpowers/
+│   ├── plans/                        # Historical implementation plans (MVP, sentiment, forecast)
+│   └── specs/                        # Feature specs (scenario, debate, lens, news-check)
 ├── public/
 └── README.md
 
@@ -111,9 +126,9 @@ Every prompt must enforce **The Economist voice**:
 
 5.3 Grounding Rules
 
-When a country is selected, always fetch real indicators from World Bank first and inject the exact numbers into the prompt.
+When a country is selected, always fetch real indicators from IMF WEO (`lib/imf.ts`) first and inject the exact numbers into the prompt.
 Explicitly tell the model: “Use these exact figures. Do not invent numbers.”
-In the UI, show a small “Grounded in latest public data” badge + year.
+In the UI, show a small “IMF WEO · {year}” badge.
 
 5.4 Chat Context
 
@@ -126,9 +141,12 @@ All prompts live in lib/prompts.ts. Never hardcode long prompts inside route han
 
 ### 5.6 Security Rules (Non-Negotiable)
 - **Never trust client-supplied strings for prompt construction.** `countryCode` is the only input accepted from the client; `countryName` is always derived server-side by looking up `countryCode` in the `COUNTRIES` allowlist.
-- **Allowlist all country codes** in both API routes — reject anything not in `COUNTRIES` with HTTP 400.
+- **Allowlist all country codes** in ALL API routes — reject anything not in `COUNTRIES` with HTTP 400. This applies to: generate-brief, chat, currency-forecast, debate, lens, news-check, scenario.
+- **Allowlist lens values** — `/api/lens` validates against `['bond', 'equity', 'central_bank']` before processing.
+- **Cap hypothesis** — `/api/scenario` caps hypothesis at 500 chars.
 - **Cap and sanitize chat messages** — limit each message to 2000 chars, allowlist `role` to `user | assistant`, coerce content to `String`.
 - **Add injection-guard instructions to every system prompt** — explicitly instruct the model to ignore role-switching, system prompt extraction, or non-economic content requests.
+- **GDELT headlines: titles only** — never pass full article text to Claude, only titles.
 - These rules are a baseline, not a ceiling. Rate limiting and CORS are out of scope for the prototype but should be added before any real deployment.
 
 6. UI & Design System
@@ -148,18 +166,17 @@ Never use generic AI gradients, purple/pink accents, or “futuristic” sci-fi 
 
 7. Data Handling
 
-World Bank Integration (lib/worldbank.ts):
-Create a small helper that fetches multiple indicators in parallel.
-Cache responses in memory (or simple Map) for the session.
-Handle missing data gracefully (some indicators lag).
-Useful indicators to start with:
-NY.GDP.MKTP.KD.ZG — GDP growth (annual %)
-FP.CPI.TOTL.ZG — Inflation, consumer prices (annual %)
-NY.GDP.MKTP.CD — GDP (current US$)
-SL.UEM.TOTL.ZS — Unemployment rate (optional)
+**IMF WEO Integration (`lib/imf.ts`)** — primary economic data source:
+- 10 indicators: NGDP_RPCH, PCPIPCH, LUR, GGXWDG_NGDP, GGXCNL_NGDP, BCA_NGDPD, TX_RPCH, NID_NGDP, NGDPD, PPPPC
+- In-memory Map cache with 5-minute TTL; disabled in test env to prevent cross-test pollution
+- ISO2 → ISO3 country code conversion for IMF API
+- Most recent year with valid data, capped at currentYear + 1
 
+**Exchange rates (`lib/worldbank.ts`)** — open.er-api.com (free, no key)
 
-Always surface the data year clearly in the UI.
+**GDELT news (`/api/news-check`)** — free, no key, `timespan=7d`, max 10 articles, titles only passed to Claude. 8-second timeout. 400 on zero results.
+
+Always surface the data year clearly in the UI (IMF WEO · {year} badge).
 
 
 8. File & Naming Conventions
@@ -171,22 +188,25 @@ Types: colocated in types/ or inline when small
 Prompts: Clear function names like createBriefingSystemPrompt(country, data)
 
 
-9. What to Prioritize in This Build
-Must have for strong interview demo:
+9. What Has Been Built (Feature Status)
 
-Working briefing generation with real World Bank data
-Excellent Economist tone control (this is the differentiator)
-Streaming chat that references the briefing
-Clean, professional UI that feels premium
-Clear “This is a prototype” labeling + export/save functionality
+**Core (done):**
+- ✅ IMF WEO briefing generation with real data + Economist voice
+- ✅ 5-dimension Dalio-inspired Economic Health Index (radar chart)
+- ✅ Streaming chat with full briefing context
+- ✅ Real-time exchange rate display
+- ✅ Suggested follow-up questions from Claude
 
-Nice to have (add only after core is solid):
+**AI Superpowers (done):**
+- ✅ Currency forecast — 24-month linear regression + CI band (Recharts ComposedChart)
+- ✅ Multi-country comparison — chat tool use (`fetch_country_indicators`) with side-by-side ComparisonCard
+- ✅ What-If Scenario Simulator — hypothesis → causal chain (ScenarioInput + ScenarioCard)
+- ✅ Bull vs Bear Debate — 3 args each side + verdict (DebateCard, two-column layout)
+- ✅ Investor Lens Mode — Bond / Equity / Central Bank reframe with Map cache (LensCard)
+- ✅ News Reconciliation — GDELT headlines → corroboration/contradiction analysis (NewsCheckCard)
 
-PDF export
-Saved briefings (localStorage)
-Multi-country comparison mode
-Suggested follow-up questions generated by LLM
-Simple world map selector (react-leaflet)
+**Not planned:**
+- PDF export, saved briefings (localStorage), world map selector — deprioritised as low-value for demo
 
 
 10. Interview Talking Points (Built Into the Code)
