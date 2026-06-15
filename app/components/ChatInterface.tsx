@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { SendHorizonal, Bot, User } from 'lucide-react'
 import type { Briefing, Message, WorldBankIndicator } from '@/types'
 
@@ -87,7 +86,7 @@ export default function ChatInterface({
         <p className="text-xs text-gray-500">Ask about {briefing.country_name}&apos;s economy</p>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0 p-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
             <Bot className="h-8 w-8 text-gray-300" />
@@ -137,7 +136,7 @@ export default function ChatInterface({
           </div>
         ))}
         <div ref={bottomRef} />
-      </ScrollArea>
+      </div>
 
       <form
         onSubmit={handleSubmit}
